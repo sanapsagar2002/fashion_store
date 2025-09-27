@@ -1,0 +1,138 @@
+{% extends 'base.html' %}
+
+{% block title %}My Orders - Fashion Store{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <h2 class="mb-4">My Orders</h2>
+    
+    <div id="orders-content">
+        <!-- Orders will be loaded here -->
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    async function loadOrders() {
+        if (!authToken) {
+            document.getElementById('orders-content').innerHTML = `
+                <div class="alert alert-info">
+                    <h4>Please login to view your orders</h4>
+                    <p>You need to be logged in to view your order history.</p>
+                    <a href="/login/" class="btn btn-primary">Login</a>
+                </div>
+            `;
+            return;
+        }
+
+        try {
+            const response = await apiRequest('/api/orders/');
+            const orders = await response.json();
+            
+            displayOrders(orders);
+        } catch (error) {
+            console.error('Error loading orders:', error);
+            document.getElementById('orders-content').innerHTML = `
+                <div class="alert alert-danger">Error loading orders</div>
+            `;
+        }
+    }
+
+    function displayOrders(orders) {
+        const container = document.getElementById('orders-content');
+        
+        if (!orders || orders.length === 0) {
+            container.innerHTML = `
+                <div class="alert alert-info text-center">
+                    <h4>No orders found</h4>
+                    <p>You haven't placed any orders yet.</p>
+                    <a href="/products/" class="btn btn-primary">Start Shopping</a>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = `
+            <div class="row">
+                ${orders.map(order => `
+                    <div class="col-12 mb-4">
+                        <div class="card">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h5 class="mb-0">Order #${order.order_number}</h5>
+                                    <small class="text-muted">Placed on ${new Date(order.created_at).toLocaleDateString()}</small>
+                                </div>
+                                <div>
+                                    <span class="badge bg-${getStatusColor(order.status)}">${order.status}</span>
+                                    <span class="badge bg-${getPaymentStatusColor(order.payment_status)} ms-2">${order.payment_status}</span>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-8">
+                                        <h6>Order Items:</h6>
+                                        ${order.items.map(item => `
+                                            <div class="d-flex justify-content-between mb-2">
+                                                <span>${item.product_variant.product.name} (${item.product_variant.size}, ${item.product_variant.color}) x ${item.quantity}</span>
+                                                <span>$${item.total_price}</span>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="text-end">
+                                            <div class="mb-2">
+                                                <strong>Total: $${order.total_amount}</strong>
+                                            </div>
+                                            ${order.tracking_number ? `
+                                                <div class="mb-2">
+                                                    <small class="text-muted">Tracking: ${order.tracking_number}</small>
+                                                </div>
+                                            ` : ''}
+                                            <button class="btn btn-outline-primary btn-sm" onclick="viewOrderDetails(${order.id})">
+                                                View Details
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+
+    function getStatusColor(status) {
+        const colors = {
+            'pending': 'warning',
+            'confirmed': 'info',
+            'processing': 'primary',
+            'shipped': 'success',
+            'delivered': 'success',
+            'cancelled': 'danger'
+        };
+        return colors[status] || 'secondary';
+    }
+
+    function getPaymentStatusColor(status) {
+        const colors = {
+            'pending': 'warning',
+            'paid': 'success',
+            'failed': 'danger',
+            'refunded': 'info'
+        };
+        return colors[status] || 'secondary';
+    }
+
+    function viewOrderDetails(orderId) {
+        // In a real implementation, you'd show a modal or navigate to a details page
+        alert(`Order details for order #${orderId}`);
+    }
+
+    // Load orders on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        loadOrders();
+    });
+</script>
+{% endblock %}

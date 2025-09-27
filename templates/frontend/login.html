@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+
+{% block title %}Login - Fashion Store{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header text-center">
+                    <h3>Login to Your Account</h3>
+                </div>
+                <div class="card-body">
+                    <form id="login-form">
+                        <div class="mb-3">
+                            <label class="form-label">Email Address</label>
+                            <input type="email" class="form-control" name="email" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Password</label>
+                            <input type="password" class="form-control" name="password" required>
+                        </div>
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="remember-me">
+                            <label class="form-check-label" for="remember-me">
+                                Remember me
+                            </label>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100 mb-3">Login</button>
+                        <div class="text-center">
+                            <a href="/forgot-password/" class="text-decoration-none">Forgot your password?</a>
+                        </div>
+                    </form>
+                </div>
+                <div class="card-footer text-center">
+                    <p class="mb-0">Don't have an account? <a href="/register/" class="text-decoration-none">Sign up here</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.getElementById('login-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const loginData = {
+            email: formData.get('email'),
+            password: formData.get('password')
+        };
+        
+        try {
+            const response = await fetch('/api/auth/login/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(loginData)
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                localStorage.setItem('authToken', data.tokens.access);
+                localStorage.setItem('refreshToken', data.tokens.refresh);
+                authToken = data.tokens.access;
+                
+                showAlert('Login successful!', 'success');
+                setTimeout(() => {
+                    window.location.href = '/';
+                }, 1000);
+            } else {
+                const error = await response.json();
+                showAlert(error.detail || 'Login failed', 'danger');
+            }
+        } catch (error) {
+            console.error('Login error:', error);
+            showAlert('Login failed. Please try again.', 'danger');
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,176 @@
+{% extends 'base.html' %}
+
+{% block title %}Home - Fashion Store{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6">
+                <h1 class="display-4 fw-bold mb-4">Discover Your Style</h1>
+                <p class="lead mb-4">Shop the latest trends in fashion and accessories. From casual wear to formal attire, we have everything you need to express your unique style.</p>
+                <a href="{% url 'products' %}" class="btn btn-light btn-lg">Shop Now</a>
+            </div>
+            <div class="col-lg-6">
+                <img src="https://via.placeholder.com/600x400/667eea/ffffff?text=Fashion+Store" class="img-fluid rounded" alt="Fashion Store">
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Categories Section -->
+<section class="py-5">
+    <div class="container">
+        <h2 class="text-center mb-5">Shop by Category</h2>
+        <div class="row">
+            <div class="col-md-4 mb-4">
+                <div class="card product-card h-100">
+                    <img src="https://via.placeholder.com/400x300/ff6b6b/ffffff?text=Men's+Fashion" class="card-img-top" alt="Men's Fashion">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">Men's Fashion</h5>
+                        <p class="card-text">Trendy clothing and accessories for men</p>
+                        <a href="#" onclick="filterByCategory('men')" class="btn btn-primary">Shop Men</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card product-card h-100">
+                    <img src="https://via.placeholder.com/400x300/4ecdc4/ffffff?text=Women's+Fashion" class="card-img-top" alt="Women's Fashion">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">Women's Fashion</h5>
+                        <p class="card-text">Elegant and stylish clothing for women</p>
+                        <a href="#" onclick="filterByCategory('women')" class="btn btn-primary">Shop Women</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card product-card h-100">
+                    <img src="https://via.placeholder.com/400x300/45b7d1/ffffff?text=Kids+Fashion" class="card-img-top" alt="Kids Fashion">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">Kids Fashion</h5>
+                        <p class="card-text">Cute and comfortable clothing for kids</p>
+                        <a href="#" onclick="filterByCategory('kids')" class="btn btn-primary">Shop Kids</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Trending Products Section -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <h2 class="text-center mb-5">Trending Now</h2>
+        <div class="row" id="trending-products">
+            <!-- Products will be loaded here -->
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="py-5">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-4 text-center mb-4">
+                <i class="fas fa-shipping-fast fa-3x text-primary mb-3"></i>
+                <h5>Free Shipping</h5>
+                <p>Free shipping on orders over $100</p>
+            </div>
+            <div class="col-md-4 text-center mb-4">
+                <i class="fas fa-undo fa-3x text-primary mb-3"></i>
+                <h5>Easy Returns</h5>
+                <p>30-day return policy for all items</p>
+            </div>
+            <div class="col-md-4 text-center mb-4">
+                <i class="fas fa-headset fa-3x text-primary mb-3"></i>
+                <h5>24/7 Support</h5>
+                <p>Customer support whenever you need it</p>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Load trending products
+    async function loadTrendingProducts() {
+        try {
+            const response = await fetch('/api/products/trending/');
+            const products = await response.json();
+            
+            const container = document.getElementById('trending-products');
+            container.innerHTML = '';
+            
+            products.forEach(product => {
+                const productCard = createProductCard(product);
+                container.appendChild(productCard);
+            });
+        } catch (error) {
+            console.error('Error loading trending products:', error);
+        }
+    }
+
+    function createProductCard(product) {
+        const col = document.createElement('div');
+        col.className = 'col-md-3 mb-4';
+        
+        col.innerHTML = `
+            <div class="card product-card h-100">
+                <img src="${product.primary_image || 'https://via.placeholder.com/300x300'}" class="card-img-top" alt="${product.name}">
+                <div class="card-body">
+                    <h6 class="card-title">${product.name}</h6>
+                    <p class="card-text text-muted">${product.category_name}</p>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="fw-bold text-primary">$${product.price}</span>
+                        <div class="rating">
+                            ${generateStars(product.average_rating)}
+                            <small class="text-muted">(${product.total_reviews})</small>
+                        </div>
+                    </div>
+                    <button class="btn btn-outline-primary btn-sm w-100 mt-2" onclick="viewProduct(${product.id})">
+                        View Details
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        return col;
+    }
+
+    function generateStars(rating) {
+        const fullStars = Math.floor(rating);
+        const hasHalfStar = rating % 1 !== 0;
+        let stars = '';
+        
+        for (let i = 0; i < fullStars; i++) {
+            stars += '<i class="fas fa-star text-warning"></i>';
+        }
+        
+        if (hasHalfStar) {
+            stars += '<i class="fas fa-star-half-alt text-warning"></i>';
+        }
+        
+        const emptyStars = 5 - Math.ceil(rating);
+        for (let i = 0; i < emptyStars; i++) {
+            stars += '<i class="far fa-star text-warning"></i>';
+        }
+        
+        return stars;
+    }
+
+    function viewProduct(productId) {
+        window.location.href = `/products/${productId}/`;
+    }
+
+    function filterByCategory(gender) {
+        window.location.href = `/products/?gender=${gender}`;
+    }
+
+    // Load trending products on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        loadTrendingProducts();
+    });
+</script>
+{% endblock %}

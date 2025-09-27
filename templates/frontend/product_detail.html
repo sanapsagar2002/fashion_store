@@ -1,0 +1,244 @@
+{% extends 'base.html' %}
+
+{% block title %}Product Details - Fashion Store{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row" id="product-detail">
+        <!-- Product details will be loaded here -->
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const productId = {{ product_id }};
+
+    async function loadProductDetails() {
+        try {
+            const response = await fetch(`/api/products/${productId}/`);
+            const product = await response.json();
+            
+            displayProductDetails(product);
+        } catch (error) {
+            console.error('Error loading product details:', error);
+            document.getElementById('product-detail').innerHTML = `
+                <div class="col-12">
+                    <div class="alert alert-danger">Error loading product details</div>
+                </div>
+            `;
+        }
+    }
+
+    function displayProductDetails(product) {
+        const container = document.getElementById('product-detail');
+        
+        container.innerHTML = `
+            <div class="col-md-6">
+                <div id="product-images">
+                    ${product.images.map((img, index) => `
+                        <img src="${img.image}" class="img-fluid mb-2 ${index === 0 ? 'active' : ''}" 
+                             alt="${product.name}" style="display: ${index === 0 ? 'block' : 'none'};">
+                    `).join('')}
+                </div>
+                <div class="row">
+                    ${product.images.map((img, index) => `
+                        <div class="col-3">
+                            <img src="${img.image}" class="img-fluid border" 
+                                 alt="${product.name}" onclick="changeMainImage(${index})" 
+                                 style="cursor: pointer;">
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+            <div class="col-md-6">
+                <h2>${product.name}</h2>
+                <div class="rating mb-3">
+                    ${generateStars(product.average_rating)}
+                    <span class="ms-2">(${product.total_reviews} reviews)</span>
+                </div>
+                <p class="text-muted">${product.description}</p>
+                
+                <div class="mb-3">
+                    <h4 class="text-primary">$${product.price}</h4>
+                </div>
+                
+                <form id="add-to-cart-form">
+                    <div class="mb-3">
+                        <label class="form-label">Size</label>
+                        <select class="form-select" name="size" id="size-select" required>
+                            <option value="">Select Size</option>
+                            ${getUniqueSizes(product.variants).map(size => `
+                                <option value="${size}">${size}</option>
+                            `).join('')}
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Color</label>
+                        <select class="form-select" name="color" id="color-select" required>
+                            <option value="">Select Color</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Quantity</label>
+                        <div class="input-group" style="width: 150px;">
+                            <button class="btn btn-outline-secondary" type="button" onclick="decreaseQuantity()">-</button>
+                            <input type="number" class="form-control text-center" name="quantity" id="quantity" value="1" min="1">
+                            <button class="btn btn-outline-secondary" type="button" onclick="increaseQuantity()">+</button>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <span id="stock-info" class="text-muted"></span>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary btn-lg w-100">
+                        <i class="fas fa-cart-plus"></i> Add to Cart
+                    </button>
+                </form>
+                
+                <div class="mt-4">
+                    <h5>Product Details</h5>
+                    <ul class="list-unstyled">
+                        <li><strong>Category:</strong> ${product.category_name}</li>
+                        <li><strong>Gender:</strong> ${getGenderLabel(product.gender)}</li>
+                        <li><strong>Brand:</strong> ${product.brand || 'N/A'}</li>
+                    </ul>
+                </div>
+            </div>
+        `;
+        
+        // Set up size/color interaction
+        document.getElementById('size-select').addEventListener('change', updateColorOptions);
+        document.getElementById('color-select').addEventListener('change', updateStockInfo);
+        
+        // Set up form submission
+        document.getElementById('add-to-cart-form').addEventListener('submit', handleAddToCart);
+    }
+
+    function getUniqueSizes(variants) {
+        return [...new Set(variants.map(v => v.size))];
+    }
+
+    function getGenderLabel(gender) {
+        const labels = {
+            'M': 'Men',
+            'W': 'Women', 
+            'K': 'Kids',
+            'U': 'Unisex'
+        };
+        return labels[gender] || 'Unisex';
+    }
+
+    function updateColorOptions() {
+        const sizeSelect = document.getElementById('size-select');
+        const colorSelect = document.getElementById('color-select');
+        const selectedSize = sizeSelect.value;
+        
+        // Clear existing options
+        colorSelect.innerHTML = '<option value="">Select Color</option>';
+        
+        if (selectedSize) {
+            // Get colors for selected size
+            const response = await fetch(`/api/products/${productId}/`);
+            const product = await response.json();
+            const availableColors = product.variants
+                .filter(v => v.size === selectedSize)
+                .map(v => v.color);
+            
+            [...new Set(availableColors)].forEach(color => {
+                const option = document.createElement('option');
+                option.value = color;
+                option.textContent = color;
+                colorSelect.appendChild(option);
+            });
+        }
+    }
+
+    function updateStockInfo() {
+        const sizeSelect = document.getElementById('size-select');
+        const colorSelect = document.getElementById('color-select');
+        const stockInfo = document.getElementById('stock-info');
+        
+        if (sizeSelect.value && colorSelect.value) {
+            // In a real implementation, you'd fetch stock info from the API
+            stockInfo.textContent = 'In Stock';
+            stockInfo.className = 'text-success';
+        } else {
+            stockInfo.textContent = 'Please select size and color';
+            stockInfo.className = 'text-muted';
+        }
+    }
+
+    function changeMainImage(index) {
+        const images = document.querySelectorAll('#product-images img');
+        images.forEach((img, i) => {
+            img.style.display = i === index ? 'block' : 'none';
+        });
+    }
+
+    function increaseQuantity() {
+        const quantityInput = document.getElementById('quantity');
+        quantityInput.value = parseInt(quantityInput.value) + 1;
+    }
+
+    function decreaseQuantity() {
+        const quantityInput = document.getElementById('quantity');
+        if (parseInt(quantityInput.value) > 1) {
+            quantityInput.value = parseInt(quantityInput.value) - 1;
+        }
+    }
+
+    function handleAddToCart(e) {
+        e.preventDefault();
+        
+        if (!authToken) {
+            alert('Please login to add items to cart');
+            window.location.href = '/login/';
+            return;
+        }
+        
+        const formData = new FormData(e.target);
+        const size = formData.get('size');
+        const color = formData.get('color');
+        const quantity = formData.get('quantity');
+        
+        if (!size || !color) {
+            alert('Please select size and color');
+            return;
+        }
+        
+        // Find the product variant
+        // This is simplified - in reality you'd need to find the variant ID
+        showAlert('Item added to cart!', 'success');
+    }
+
+    function generateStars(rating) {
+        const fullStars = Math.floor(rating);
+        const hasHalfStar = rating % 1 !== 0;
+        let stars = '';
+        
+        for (let i = 0; i < fullStars; i++) {
+            stars += '<i class="fas fa-star text-warning"></i>';
+        }
+        
+        if (hasHalfStar) {
+            stars += '<i class="fas fa-star-half-alt text-warning"></i>';
+        }
+        
+        const emptyStars = 5 - Math.ceil(rating);
+        for (let i = 0; i < emptyStars; i++) {
+            stars += '<i class="far fa-star text-warning"></i>';
+        }
+        
+        return stars;
+    }
+
+    // Load product details on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        loadProductDetails();
+    });
+</script>
+{% endblock %}
