@@ -1,5 +1,3 @@
-# fashion-store
-
 # Fashion Store - E-commerce Website
 
 A full-stack e-commerce website for clothing and accessories built with Django, Django REST Framework, and Bootstrap.
