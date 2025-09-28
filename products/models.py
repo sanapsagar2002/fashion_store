@@ -108,3 +108,67 @@ class ProductReview(models.Model):
 
     def __str__(self):
         return f"{self.user.email} - {self.product.name} - {self.rating} stars"
+
+
+class OutfitRecommendation(models.Model):
+    OCCASION_CHOICES = [
+        ('casual', 'Casual'),
+        ('formal', 'Formal'),
+        ('business', 'Business'),
+        ('party', 'Party'),
+        ('date', 'Date Night'),
+        ('workout', 'Workout'),
+        ('travel', 'Travel'),
+        ('wedding', 'Wedding'),
+    ]
+
+    SEASON_CHOICES = [
+        ('spring', 'Spring'),
+        ('summer', 'Summer'),
+        ('fall', 'Fall'),
+        ('winter', 'Winter'),
+    ]
+
+    name = models.CharField(max_length=200)
+    description = models.TextField()
+    occasion = models.CharField(max_length=20, choices=OCCASION_CHOICES)
+    season = models.CharField(max_length=20, choices=SEASON_CHOICES)
+    gender = models.CharField(max_length=1, choices=Product.GENDER_CHOICES)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.name} - {self.get_occasion_display()}"
+
+
+class OutfitItem(models.Model):
+    outfit = models.ForeignKey(OutfitRecommendation, on_delete=models.CASCADE, related_name='items')
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    item_type = models.CharField(max_length=50)  # e.g., 'top', 'bottom', 'shoes', 'accessory'
+    is_essential = models.BooleanField(default=True)  # Essential items vs optional
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ['outfit', 'product']
+
+    def __str__(self):
+        return f"{self.outfit.name} - {self.product.name} ({self.item_type})"
+
+
+class UserOutfitPreference(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='outfit_preferences')
+    occasion = models.CharField(max_length=20, choices=OutfitRecommendation.OCCASION_CHOICES)
+    season = models.CharField(max_length=20, choices=OutfitRecommendation.SEASON_CHOICES)
+    preferred_colors = models.JSONField(default=list, blank=True)
+    preferred_brands = models.JSONField(default=list, blank=True)
+    budget_min = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    budget_max = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ['user', 'occasion', 'season']
+
+    def __str__(self):
+        return f"{self.user.email} - {self.get_occasion_display()} {self.get_season_display()}"

@@ -1,0 +1,361 @@
+{% extends 'base.html' %}
+
+{% block title %}Outfit Recommendations - Fashion Store{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="mb-4">Outfit Recommendations</h1>
+            <p class="lead mb-5">Discover perfect outfit combinations for any occasion</p>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <form id="outfit-filters" class="row g-3">
+                        <div class="col-md-3">
+                            <label class="form-label">Occasion</label>
+                            <select class="form-select" name="occasion" id="occasion-filter">
+                                <option value="">All Occasions</option>
+                                <option value="casual">Casual</option>
+                                <option value="formal">Formal</option>
+                                <option value="business">Business</option>
+                                <option value="party">Party</option>
+                                <option value="date">Date Night</option>
+                                <option value="workout">Workout</option>
+                                <option value="travel">Travel</option>
+                                <option value="wedding">Wedding</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Season</label>
+                            <select class="form-select" name="season" id="season-filter">
+                                <option value="">All Seasons</option>
+                                <option value="spring">Spring</option>
+                                <option value="summer">Summer</option>
+                                <option value="fall">Fall</option>
+                                <option value="winter">Winter</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Gender</label>
+                            <select class="form-select" name="gender" id="gender-filter">
+                                <option value="">All</option>
+                                <option value="M">Men</option>
+                                <option value="W">Women</option>
+                                <option value="K">Kids</option>
+                                <option value="U">Unisex</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">&nbsp;</label>
+                            <div>
+                                <button type="submit" class="btn btn-primary">Filter Outfits</button>
+                                <button type="button" class="btn btn-outline-secondary" onclick="clearFilters()">Clear</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Personalized Outfits Section -->
+    <div class="row mb-5" id="personalized-section" style="display: none;">
+        <div class="col-12">
+            <h3>Personalized for You</h3>
+            <div id="personalized-outfits" class="row">
+                <!-- Personalized outfits will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Outfit Recommendations -->
+    <div class="row">
+        <div class="col-12">
+            <h3>Outfit Recommendations</h3>
+            <div id="outfits-container" class="row">
+                <!-- Outfits will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Custom Outfit Modal -->
+    <div class="modal fade" id="createOutfitModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Create Custom Outfit</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="create-outfit-form">
+                        <div class="mb-3">
+                            <label class="form-label">Outfit Name</label>
+                            <input type="text" class="form-control" name="name" required>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <label class="form-label">Occasion</label>
+                                <select class="form-select" name="occasion" required>
+                                    <option value="casual">Casual</option>
+                                    <option value="formal">Formal</option>
+                                    <option value="business">Business</option>
+                                    <option value="party">Party</option>
+                                    <option value="date">Date Night</option>
+                                    <option value="workout">Workout</option>
+                                    <option value="travel">Travel</option>
+                                    <option value="wedding">Wedding</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Season</label>
+                                <select class="form-select" name="season" required>
+                                    <option value="spring">Spring</option>
+                                    <option value="summer">Summer</option>
+                                    <option value="fall">Fall</option>
+                                    <option value="winter">Winter</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Gender</label>
+                                <select class="form-select" name="gender" required>
+                                    <option value="U">Unisex</option>
+                                    <option value="M">Men</option>
+                                    <option value="W">Women</option>
+                                    <option value="K">Kids</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Selected Products</label>
+                            <div id="selected-products" class="border p-3 rounded">
+                                <p class="text-muted">No products selected</p>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="createCustomOutfit()">Create Outfit</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let selectedProducts = [];
+    let currentOutfits = [];
+
+    // Load outfits on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        loadOutfits();
+        loadPersonalizedOutfits();
+    });
+
+    // Filter form submission
+    document.getElementById('outfit-filters').addEventListener('submit', function(e) {
+        e.preventDefault();
+        loadOutfits();
+    });
+
+    async function loadOutfits() {
+        try {
+            const formData = new FormData(document.getElementById('outfit-filters'));
+            const params = new URLSearchParams();
+            
+            for (let [key, value] of formData.entries()) {
+                if (value) params.append(key, value);
+            }
+            
+            const response = await fetch(`/api/products/outfits/?${params.toString()}`);
+            const data = await response.json();
+            
+            displayOutfits(data.results || data);
+        } catch (error) {
+            console.error('Error loading outfits:', error);
+            showAlert('Failed to load outfits', 'danger');
+        }
+    }
+
+    async function loadPersonalizedOutfits() {
+        try {
+            const response = await fetch('/api/products/outfits/personalized/');
+            if (response.ok) {
+                const data = await response.json();
+                if (data.length > 0) {
+                    document.getElementById('personalized-section').style.display = 'block';
+                    displayPersonalizedOutfits(data);
+                }
+            }
+        } catch (error) {
+            console.error('Error loading personalized outfits:', error);
+        }
+    }
+
+    function displayOutfits(outfits) {
+        const container = document.getElementById('outfits-container');
+        currentOutfits = outfits;
+        
+        if (outfits.length === 0) {
+            container.innerHTML = '<div class="col-12"><p class="text-muted">No outfits found matching your criteria.</p></div>';
+            return;
+        }
+        
+        container.innerHTML = outfits.map(outfit => `
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="card outfit-card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">${outfit.name}</h5>
+                        <p class="card-text text-muted">${outfit.description}</p>
+                        <div class="mb-2">
+                            <span class="badge bg-primary me-1">${outfit.occasion}</span>
+                            <span class="badge bg-secondary me-1">${outfit.season}</span>
+                            <span class="badge bg-info">${outfit.gender}</span>
+                        </div>
+                        <div class="mb-3">
+                            <h6>Items (${outfit.item_count}):</h6>
+                            <div class="row">
+                                ${outfit.items.map(item => `
+                                    <div class="col-6 mb-2">
+                                        <div class="d-flex align-items-center">
+                                            ${item.product_image ? `<img src="${item.product_image}" class="me-2" style="width: 30px; height: 30px; object-fit: cover;">` : ''}
+                                            <div>
+                                                <small class="fw-bold">${item.product_name}</small>
+                                                <br><small class="text-muted">$${item.product_price}</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="fw-bold text-primary">Total: $${outfit.total_price}</span>
+                            <button class="btn btn-sm btn-outline-primary" onclick="viewOutfitDetails(${outfit.id})">
+                                View Details
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function displayPersonalizedOutfits(outfits) {
+        const container = document.getElementById('personalized-outfits');
+        container.innerHTML = outfits.map(outfit => `
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="card outfit-card h-100 border-success">
+                    <div class="card-body">
+                        <h5 class="card-title">${outfit.name} <span class="badge bg-success">Personalized</span></h5>
+                        <p class="card-text text-muted">${outfit.description}</p>
+                        <div class="mb-2">
+                            <span class="badge bg-primary me-1">${outfit.occasion}</span>
+                            <span class="badge bg-secondary me-1">${outfit.season}</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="fw-bold text-primary">Total: $${outfit.total_price}</span>
+                            <button class="btn btn-sm btn-success" onclick="viewOutfitDetails(${outfit.id})">
+                                View Details
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function viewOutfitDetails(outfitId) {
+        // Find outfit in current outfits
+        const outfit = currentOutfits.find(o => o.id === outfitId);
+        if (outfit) {
+            // Show outfit details in a modal or redirect to detail page
+            alert(`Outfit: ${outfit.name}\nTotal Price: $${outfit.total_price}\nItems: ${outfit.item_count}`);
+        }
+    }
+
+    function clearFilters() {
+        document.getElementById('outfit-filters').reset();
+        loadOutfits();
+    }
+
+    function openCreateOutfitModal() {
+        selectedProducts = [];
+        updateSelectedProductsDisplay();
+        new bootstrap.Modal(document.getElementById('createOutfitModal')).show();
+    }
+
+    function updateSelectedProductsDisplay() {
+        const container = document.getElementById('selected-products');
+        if (selectedProducts.length === 0) {
+            container.innerHTML = '<p class="text-muted">No products selected</p>';
+        } else {
+            container.innerHTML = selectedProducts.map(product => `
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span>${product.name} - $${product.price}</span>
+                    <button class="btn btn-sm btn-outline-danger" onclick="removeProduct(${product.id})">Remove</button>
+                </div>
+            `).join('');
+        }
+    }
+
+    function removeProduct(productId) {
+        selectedProducts = selectedProducts.filter(p => p.id !== productId);
+        updateSelectedProductsDisplay();
+    }
+
+    async function createCustomOutfit() {
+        if (selectedProducts.length === 0) {
+            showAlert('Please select at least one product', 'warning');
+            return;
+        }
+
+        try {
+            const formData = new FormData(document.getElementById('create-outfit-form'));
+            const outfitData = {
+                name: formData.get('name'),
+                occasion: formData.get('occasion'),
+                season: formData.get('season'),
+                gender: formData.get('gender'),
+                product_ids: selectedProducts.map(p => p.id)
+            };
+
+            const response = await fetch('/api/products/outfits/create/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+                },
+                body: JSON.stringify(outfitData)
+            });
+
+            if (response.ok) {
+                showAlert('Custom outfit created successfully!', 'success');
+                bootstrap.Modal.getInstance(document.getElementById('createOutfitModal')).hide();
+                loadOutfits();
+            } else {
+                const error = await response.json();
+                showAlert(error.error || 'Failed to create outfit', 'danger');
+            }
+        } catch (error) {
+            console.error('Error creating outfit:', error);
+            showAlert('Failed to create outfit', 'danger');
+        }
+    }
+
+    // Function to add product to outfit creation (called from product pages)
+    function addToOutfit(product) {
+        if (!selectedProducts.find(p => p.id === product.id)) {
+            selectedProducts.push(product);
+            updateSelectedProductsDisplay();
+        }
+    }
+</script>
+{% endblock %}

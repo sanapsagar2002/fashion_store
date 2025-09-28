@@ -48,3 +48,7 @@ def reset_password(request, token):
 @login_required
 def profile(request):
     return render(request, 'frontend/profile.html')
+
+
+def outfits(request):
+    return render(request, 'frontend/outfits.html')

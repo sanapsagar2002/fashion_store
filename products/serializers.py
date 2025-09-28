@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Category, Product, ProductImage, ProductVariant, ProductReview
+from .models import Category, Product, ProductImage, ProductVariant, ProductReview, OutfitRecommendation, OutfitItem, UserOutfitPreference
 from authentication.models import User
 
 
@@ -123,3 +123,61 @@ class ProductCreateUpdateSerializer(serializers.ModelSerializer):
                 ProductVariant.objects.create(product=instance, **variant_data)
         
         return instance
+
+
+# Outfit Recommendation Serializers
+class OutfitItemSerializer(serializers.ModelSerializer):
+    product_name = serializers.CharField(source='product.name', read_only=True)
+    product_price = serializers.DecimalField(source='product.price', max_digits=10, decimal_places=2, read_only=True)
+    product_image = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = OutfitItem
+        fields = ['id', 'product', 'product_name', 'product_price', 'product_image', 'item_type', 'is_essential']
+    
+    def get_product_image(self, obj):
+        primary_image = obj.product.images.filter(is_primary=True).first()
+        if primary_image:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(primary_image.image.url)
+        return None
+
+
+class OutfitRecommendationSerializer(serializers.ModelSerializer):
+    items = OutfitItemSerializer(many=True, read_only=True)
+    total_price = serializers.SerializerMethodField()
+    item_count = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = OutfitRecommendation
+        fields = ['id', 'name', 'description', 'occasion', 'season', 'gender', 'items', 'total_price', 'item_count', 'created_at']
+    
+    def get_total_price(self, obj):
+        return sum(item.product.price for item in obj.items.all())
+    
+    def get_item_count(self, obj):
+        return obj.items.count()
+
+
+class UserOutfitPreferenceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserOutfitPreference
+        fields = ['id', 'occasion', 'season', 'preferred_colors', 'preferred_brands', 'budget_min', 'budget_max', 'created_at', 'updated_at']
+
+
+class PersonalizedOutfitSerializer(serializers.ModelSerializer):
+    primary_image = serializers.SerializerMethodField()
+    category_name = serializers.CharField(source='category.name', read_only=True)
+    
+    class Meta:
+        model = Product
+        fields = ['id', 'name', 'price', 'category_name', 'gender', 'brand', 'primary_image']
+    
+    def get_primary_image(self, obj):
+        primary_image = obj.images.filter(is_primary=True).first()
+        if primary_image:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(primary_image.image.url)
+        return None
