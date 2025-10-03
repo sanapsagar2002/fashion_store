@@ -325,6 +325,4 @@ For support and questions:
 
 ---
 
-**Built with ❤️ using Django and modern web technologies**
-# fashion_store
 
