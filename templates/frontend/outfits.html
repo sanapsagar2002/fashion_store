@@ -42,13 +42,12 @@
                             </select>
                         </div>
                         <div class="col-md-3">
-                            <label class="form-label">Gender</label>
+                            <label class="form-label">Audience</label>
                             <select class="form-select" name="gender" id="gender-filter">
                                 <option value="">All</option>
                                 <option value="M">Men</option>
                                 <option value="W">Women</option>
                                 <option value="K">Kids</option>
-                                <option value="U">Unisex</option>
                             </select>
                         </div>
                         <div class="col-md-3">
@@ -170,10 +169,12 @@
         try {
             const formData = new FormData(document.getElementById('outfit-filters'));
             const params = new URLSearchParams();
-            
-            for (let [key, value] of formData.entries()) {
-                if (value) params.append(key, value);
-            }
+            const occasion = formData.get('occasion');
+            const season = formData.get('season');
+            const gender = formData.get('gender');
+            if (occasion) params.append('occasion', occasion);
+            if (season) params.append('season', season);
+            if (gender) params.append('gender', gender);
             
             const response = await fetch(`/api/products/outfits/?${params.toString()}`);
             const data = await response.json();

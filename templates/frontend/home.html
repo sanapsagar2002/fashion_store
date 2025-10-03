@@ -3,89 +3,200 @@
 {% block title %}Home - Fashion Store{% endblock %}
 
 {% block content %}
-<!-- Hero Section -->
-<section class="hero-section">
-    <div class="container">
-        <div class="row align-items-center">
-            <div class="col-lg-6">
-                <h1 class="display-4 fw-bold mb-4">Discover Your Style</h1>
-                <p class="lead mb-4">Shop the latest trends in fashion and accessories. From casual wear to formal attire, we have everything you need to express your unique style.</p>
-                <a href="{% url 'products' %}" class="btn btn-light btn-lg">Shop Now</a>
+<!-- Hero Carousel Section -->
+<section class="hero-carousel">
+    <div id="heroCarousel" class="carousel slide" data-bs-ride="carousel">
+        <div class="carousel-indicators">
+            <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="0" class="active"></button>
+            <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="1"></button>
+            <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="2"></button>
+        </div>
+        <div class="carousel-inner">
+            <div class="carousel-item active">
+                <div class="hero-slide">
+                    <div class="hero-image-frame">
+                        <img src="/media/products/elegant_black_dress_1.jpg" alt="New Collection" class="hero-image">
+                    </div>
+                    <div class="container">
+                        <div class="row align-items-center min-vh-100">
+                            <div class="col-lg-6">
+                                <h1 class="display-3 fw-bold text-white mb-4">New Collection</h1>
+                                <p class="lead text-white mb-4">Discover the latest trends in fashion. From casual wear to formal attire, express your unique style.</p>
+                                <a href="{% url 'new_collection' %}" class="btn btn-primary btn-lg me-3">New Collection</a>
+                                <a href="{% url 'products' %}" class="btn btn-outline-light btn-lg">Shop All</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="col-lg-6">
-                <img src="https://via.placeholder.com/600x400/667eea/ffffff?text=Fashion+Store" class="img-fluid rounded" alt="Fashion Store">
+            <div class="carousel-item">
+                <div class="hero-slide">
+                    <div class="hero-image-frame">
+                        <img src="/media/products/blue_denim_jeans_1.jpg" alt="Men's Fashion" class="hero-image">
+                    </div>
+                    <div class="container">
+                        <div class="row align-items-center min-vh-100">
+                            <div class="col-lg-6">
+                                <h1 class="display-3 fw-bold text-white mb-4">Men's Fashion</h1>
+                                <p class="lead text-white mb-4">Elevate your wardrobe with our premium collection of men's clothing and accessories.</p>
+                                <a href="{% url 'men_fashion' %}" class="btn btn-primary btn-lg me-3">Shop Men</a>
+                                <a href="{% url 'products' %}?accessory=watch" class="btn btn-outline-light btn-lg">Watches</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="carousel-item">
+                <div class="hero-slide">
+                    <div class="hero-image-frame">
+                        <img src="/media/products/comfortable_sneakers_1.jpg" alt="Kids Collection" class="hero-image">
+                    </div>
+                    <div class="container">
+                        <div class="row align-items-center min-vh-100">
+                            <div class="col-lg-6">
+                                <h1 class="display-3 fw-bold text-white mb-4">Kids Collection</h1>
+                                <p class="lead text-white mb-4">Fun, comfortable, and stylish clothing for your little ones. Quality that lasts.</p>
+                                <a href="{% url 'kids_collection' %}" class="btn btn-primary btn-lg me-3">Shop Kids</a>
+                                <a href="{% url 'products' %}?accessory=sneaker" class="btn btn-outline-light btn-lg">Sneakers</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
+        <button class="carousel-control-prev" type="button" data-bs-target="#heroCarousel" data-bs-slide="prev">
+            <span class="carousel-control-prev-icon"></span>
+        </button>
+        <button class="carousel-control-next" type="button" data-bs-target="#heroCarousel" data-bs-slide="next">
+            <span class="carousel-control-next-icon"></span>
+        </button>
     </div>
 </section>
 
-<!-- Categories Section -->
-<section class="py-5">
-    <div class="container">
-        <h2 class="text-center mb-5">Shop by Category</h2>
-        <div class="row">
-            <div class="col-md-4 mb-4">
-                <div class="card product-card h-100">
-                    <img src="https://via.placeholder.com/400x300/ff6b6b/ffffff?text=Men's+Fashion" class="card-img-top" alt="Men's Fashion">
-                    <div class="card-body text-center">
-                        <h5 class="card-title">Men's Fashion</h5>
-                        <p class="card-text">Trendy clothing and accessories for men</p>
-                        <a href="#" onclick="filterByCategory('men')" class="btn btn-primary">Shop Men</a>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4 mb-4">
-                <div class="card product-card h-100">
-                    <img src="https://via.placeholder.com/400x300/4ecdc4/ffffff?text=Women's+Fashion" class="card-img-top" alt="Women's Fashion">
-                    <div class="card-body text-center">
-                        <h5 class="card-title">Women's Fashion</h5>
-                        <p class="card-text">Elegant and stylish clothing for women</p>
-                        <a href="#" onclick="filterByCategory('women')" class="btn btn-primary">Shop Women</a>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4 mb-4">
-                <div class="card product-card h-100">
-                    <img src="https://via.placeholder.com/400x300/45b7d1/ffffff?text=Kids+Fashion" class="card-img-top" alt="Kids Fashion">
-                    <div class="card-body text-center">
-                        <h5 class="card-title">Kids Fashion</h5>
-                        <p class="card-text">Cute and comfortable clothing for kids</p>
-                        <a href="#" onclick="filterByCategory('kids')" class="btn btn-primary">Shop Kids</a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
-
-<!-- Trending Products Section -->
+<!-- Quick Categories Section -->
 <section class="py-5 bg-light">
     <div class="container">
-        <h2 class="text-center mb-5">Trending Now</h2>
-        <div class="row" id="trending-products">
+        <h2 class="text-center mb-5">Shop by Category</h2>
+        <div class="row g-4">
+            <div class="col-lg-4 col-md-6">
+                <div class="category-card">
+                    <div class="category-image">
+                        <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80" alt="Men's Fashion">
+                        <div class="category-overlay">
+                            <h3>Men's Fashion</h3>
+                            <p>Trendy clothing and accessories</p>
+                            <a href="{% url 'men_fashion' %}" class="btn btn-primary">Shop Now</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-6">
+                <div class="category-card">
+                    <div class="category-image">
+                        <img src="https://images.unsplash.com/photo-1441986300917-64674bd600d8?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80" alt="Women's Fashion">
+                        <div class="category-overlay">
+                            <h3>Women's Fashion</h3>
+                            <p>Elegant and stylish clothing</p>
+                            <a href="{% url 'women_fashion' %}" class="btn btn-primary">Shop Now</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-6">
+                <div class="category-card">
+                    <div class="category-image">
+                        <img src="https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80" alt="Kids Fashion">
+                        <div class="category-overlay">
+                            <h3>Kids Fashion</h3>
+                            <p>Cute and comfortable clothing</p>
+                            <a href="{% url 'kids_collection' %}" class="btn btn-primary">Shop Now</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6 col-md-6">
+                <div class="category-card">
+                    <div class="category-image">
+                        <img src="https://images.unsplash.com/photo-1523275335684-37898b6baf30?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80" alt="Watches">
+                        <div class="category-overlay">
+                            <h3>Watches</h3>
+                            <p>Premium timepieces</p>
+                            <a href="{% url 'products' %}?accessory=watch" class="btn btn-primary">Shop Now</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6 col-md-6">
+                <div class="category-card">
+                    <div class="category-image">
+                        <img src="https://images.unsplash.com/photo-1549298916-b41d501d3772?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80" alt="Sneakers">
+                        <div class="category-overlay">
+                            <h3>Sneakers</h3>
+                            <p>Comfortable and stylish shoes</p>
+                            <a href="{% url 'products' %}?accessory=sneaker" class="btn btn-primary">Shop Now</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Featured Products Section -->
+<section class="py-5">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center mb-5">
+            <h2 class="mb-0">Featured Products</h2>
+            <a href="{% url 'products' %}" class="btn btn-outline-primary">View All</a>
+        </div>
+        <div class="row g-4" id="featured-products">
             <!-- Products will be loaded here -->
         </div>
     </div>
 </section>
 
 <!-- Features Section -->
-<section class="py-5">
+<section class="py-5 bg-light">
     <div class="container">
-        <div class="row">
-            <div class="col-md-4 text-center mb-4">
-                <i class="fas fa-shipping-fast fa-3x text-primary mb-3"></i>
+        <div class="row g-4">
+            <div class="col-md-4 text-center">
+                <div class="feature-icon">
+                    <i class="fas fa-shipping-fast"></i>
+                </div>
                 <h5>Free Shipping</h5>
-                <p>Free shipping on orders over $100</p>
+                <p class="text-muted">Free shipping on orders over $100</p>
             </div>
-            <div class="col-md-4 text-center mb-4">
-                <i class="fas fa-undo fa-3x text-primary mb-3"></i>
+            <div class="col-md-4 text-center">
+                <div class="feature-icon">
+                    <i class="fas fa-undo"></i>
+                </div>
                 <h5>Easy Returns</h5>
-                <p>30-day return policy for all items</p>
+                <p class="text-muted">30-day return policy for all items</p>
             </div>
-            <div class="col-md-4 text-center mb-4">
-                <i class="fas fa-headset fa-3x text-primary mb-3"></i>
+            <div class="col-md-4 text-center">
+                <div class="feature-icon">
+                    <i class="fas fa-headset"></i>
+                </div>
                 <h5>24/7 Support</h5>
-                <p>Customer support whenever you need it</p>
+                <p class="text-muted">Customer support whenever you need it</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Newsletter Section -->
+<section class="py-5 bg-primary text-white">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6">
+                <h3 class="mb-3">Stay Updated</h3>
+                <p class="mb-0">Subscribe to our newsletter for the latest fashion trends and exclusive offers.</p>
+            </div>
+            <div class="col-lg-6">
+                <div class="input-group">
+                    <input type="email" class="form-control" placeholder="Enter your email">
+                    <button class="btn btn-light" type="button">Subscribe</button>
+                </div>
             </div>
         </div>
     </div>
@@ -94,44 +205,129 @@
 
 {% block scripts %}
 <script>
-    // Load trending products
-    async function loadTrendingProducts() {
+    // Load featured products
+    async function loadFeaturedProducts() {
         try {
-            const response = await fetch('/api/products/trending/');
-            const products = await response.json();
+            const response = await fetch('/api/products/?is_featured=true&limit=8');
+            const data = await response.json();
+            const products = data.results || data;
             
-            const container = document.getElementById('trending-products');
+            const container = document.getElementById('featured-products');
             container.innerHTML = '';
             
-            products.forEach(product => {
-                const productCard = createProductCard(product);
-                container.appendChild(productCard);
-            });
+            if (products.length === 0) {
+                // Fallback to any products if no featured products
+                const fallbackResponse = await fetch('/api/products/?limit=8');
+                const fallbackData = await fallbackResponse.json();
+                const fallbackProducts = fallbackData.results || fallbackData;
+                
+                fallbackProducts.forEach(product => {
+                    const productCard = createProductCard(product);
+                    container.appendChild(productCard);
+                });
+            } else {
+                products.forEach(product => {
+                    const productCard = createProductCard(product);
+                    container.appendChild(productCard);
+                });
+            }
         } catch (error) {
-            console.error('Error loading trending products:', error);
+            console.error('Error loading featured products:', error);
+            // Show placeholder products
+            showPlaceholderProducts();
         }
+    }
+
+    function showPlaceholderProducts() {
+        const container = document.getElementById('featured-products');
+        const placeholderProducts = [
+            {
+                id: 1,
+                name: "Classic White T-Shirt",
+                price: "29.99",
+                original_price: "39.99",
+                primary_image: "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
+                average_rating: 4.5,
+                total_reviews: 128
+            },
+            {
+                id: 2,
+                name: "Blue Denim Jeans",
+                price: "79.99",
+                original_price: "99.99",
+                primary_image: "https://images.unsplash.com/photo-1542272604-787c3835535d?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
+                average_rating: 4.2,
+                total_reviews: 95
+            },
+            {
+                id: 3,
+                name: "Elegant Black Dress",
+                price: "89.99",
+                original_price: "119.99",
+                primary_image: "https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
+                average_rating: 4.8,
+                total_reviews: 203
+            },
+            {
+                id: 4,
+                name: "Comfortable Sneakers",
+                price: "89.99",
+                original_price: "119.99",
+                primary_image: "https://images.unsplash.com/photo-1549298916-b41d501d3772?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
+                average_rating: 4.3,
+                total_reviews: 156
+            }
+        ];
+
+        placeholderProducts.forEach(product => {
+            const productCard = createProductCard(product);
+            container.appendChild(productCard);
+        });
     }
 
     function createProductCard(product) {
         const col = document.createElement('div');
-        col.className = 'col-md-3 mb-4';
+        col.className = 'col-lg-3 col-md-6';
+        
+        const discountPercentage = product.original_price && product.original_price > product.price 
+            ? Math.round(((product.original_price - product.price) / product.original_price) * 100) 
+            : 0;
         
         col.innerHTML = `
             <div class="card product-card h-100">
-                <img src="${product.primary_image || 'https://via.placeholder.com/300x300'}" class="card-img-top" alt="${product.name}">
-                <div class="card-body">
-                    <h6 class="card-title">${product.name}</h6>
-                    <p class="card-text text-muted">${product.category_name}</p>
-                    <div class="d-flex justify-content-between align-items-center">
-                        <span class="fw-bold text-primary">$${product.price}</span>
-                        <div class="rating">
-                            ${generateStars(product.average_rating)}
-                            <small class="text-muted">(${product.total_reviews})</small>
-                        </div>
+                ${discountPercentage > 0 ? `<span class="product-badge discount-badge">-${discountPercentage}%</span>` : ''}
+                <div class="product-image-container">
+                    <img src="${product.primary_image || 'https://via.placeholder.com/300x300'}" 
+                         class="card-img-top" alt="${product.name}"
+                         onerror="this.src='https://via.placeholder.com/300x300'">
+                    <div class="product-overlay">
+                        <button class="btn btn-primary btn-sm" onclick="quickView(${product.id})">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="btn btn-outline-primary btn-sm" onclick="addToWishlist(${product.id})">
+                            <i class="fas fa-heart"></i>
+                        </button>
                     </div>
-                    <button class="btn btn-outline-primary btn-sm w-100 mt-2" onclick="viewProduct(${product.id})">
-                        View Details
-                    </button>
+                </div>
+                <div class="card-body">
+                    <h6 class="product-title">${product.name}</h6>
+                    <div class="product-rating">
+                        <div class="stars">${generateStars(product.average_rating || 0)}</div>
+                        <span class="rating-count">(${product.total_reviews || 0})</span>
+                    </div>
+                    <div class="product-price">
+                        <span class="current-price">$${product.price}</span>
+                        ${product.original_price && product.original_price > product.price ? 
+                            `<span class="original-price">$${product.original_price}</span>` : ''}
+                    </div>
+                    <div class="product-actions">
+                        <button class="btn btn-outline-primary btn-sm flex-fill" onclick="viewProduct(${product.id})">
+                            <i class="fas fa-eye me-1"></i>View
+                        </button>
+                        <button class="btn btn-primary btn-sm" onclick="addToCart(${product.id})">
+                            <i class="fas fa-cart-plus"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
         `;
@@ -164,13 +360,290 @@
         window.location.href = `/products/${productId}/`;
     }
 
-    function filterByCategory(gender) {
-        window.location.href = `/products/?gender=${gender}`;
+    function quickView(productId) {
+        window.location.href = `/products/${productId}/`;
     }
 
-    // Load trending products on page load
+    function addToWishlist(productId) {
+        if (!authToken) {
+            showAlert('Please login to add items to wishlist', 'warning');
+            window.location.href = '/login/';
+            return;
+        }
+        
+        apiRequest(`/api/products/${productId}/wishlist/`, {
+            method: 'POST'
+        })
+        .then(response => {
+            if (response.ok) {
+                showAlert('Added to wishlist!', 'success');
+            } else {
+                showAlert('Failed to add to wishlist', 'danger');
+            }
+        })
+        .catch(error => {
+            console.error('Error adding to wishlist:', error);
+            showAlert('Error adding to wishlist', 'danger');
+        });
+    }
+
+    function addToCart(productId) {
+        if (!authToken) {
+            showAlert('Please login to add items to cart', 'warning');
+            window.location.href = '/login/';
+            return;
+        }
+        
+        // Simplified - add first variant
+        fetch(`/api/products/${productId}/variants/`)
+            .then(response => response.json())
+            .then(variants => {
+                if (variants.length > 0) {
+                    const variantId = variants[0].id;
+                    return apiRequest('/api/cart/add/', {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            product_variant_id: variantId,
+                            quantity: 1
+                        })
+                    });
+                }
+            })
+            .then(response => {
+                if (response && response.ok) {
+                    showAlert('Item added to cart!', 'success');
+                    updateCartBadge();
+                } else {
+                    showAlert('Failed to add item to cart', 'danger');
+                }
+            })
+            .catch(error => {
+                console.error('Error adding to cart:', error);
+                showAlert('Error adding item to cart', 'danger');
+            });
+    }
+
+    // Load featured products on page load
     document.addEventListener('DOMContentLoaded', function() {
-        loadTrendingProducts();
+        loadFeaturedProducts();
     });
 </script>
+
+<style>
+/* Hero Carousel Styles */
+.hero-carousel {
+    position: relative;
+    overflow: hidden;
+}
+
+.hero-slide {
+    background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4));
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    position: relative;
+}
+
+.hero-image-frame {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    overflow: hidden;
+}
+
+.hero-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+}
+
+.carousel-control-prev,
+.carousel-control-next {
+    width: 50px;
+    height: 50px;
+    background: rgba(0,0,0,0.5);
+    border-radius: 50%;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.carousel-control-prev {
+    left: 30px;
+}
+
+.carousel-control-next {
+    right: 30px;
+}
+
+.carousel-indicators {
+    bottom: 30px;
+}
+
+.carousel-indicators button {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin: 0 5px;
+}
+
+/* Category Cards */
+.category-card {
+    position: relative;
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    transition: transform 0.3s ease;
+}
+
+.category-card:hover {
+    transform: translateY(-10px);
+}
+
+.category-image {
+    position: relative;
+    height: 300px;
+    overflow: hidden;
+}
+
+.category-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.category-card:hover .category-image img {
+    transform: scale(1.1);
+}
+
+.category-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, rgba(255,107,53,0.9), rgba(52,152,219,0.9));
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    color: white;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.category-card:hover .category-overlay {
+    opacity: 1;
+}
+
+.category-overlay h3 {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+}
+
+.category-overlay p {
+    font-size: 1.1rem;
+    margin-bottom: 1.5rem;
+}
+
+/* Product Cards */
+.product-image-container {
+    position: relative;
+    overflow: hidden;
+}
+
+.product-image-container img {
+    transition: transform 0.3s ease;
+}
+
+.product-card:hover .product-image-container img {
+    transform: scale(1.05);
+}
+
+.product-overlay {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.product-card:hover .product-overlay {
+    opacity: 1;
+}
+
+.product-badge {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    background: var(--success-color);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    z-index: 3;
+}
+
+.discount-badge {
+    background: var(--danger-color);
+}
+
+/* Feature Icons */
+.feature-icon {
+    width: 80px;
+    height: 80px;
+    background: var(--primary-color);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem;
+    color: white;
+    font-size: 2rem;
+}
+
+/* Newsletter */
+.bg-primary {
+    background: linear-gradient(135deg, var(--primary-color), var(--accent-color)) !important;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .hero-slide {
+        min-height: 70vh;
+    }
+    
+    .display-3 {
+        font-size: 2.5rem;
+    }
+    
+    .category-overlay h3 {
+        font-size: 1.5rem;
+    }
+    
+    .carousel-control-prev,
+    .carousel-control-next {
+        width: 40px;
+        height: 40px;
+    }
+    
+    .carousel-control-prev {
+        left: 15px;
+    }
+    
+    .carousel-control-next {
+        right: 15px;
+    }
+}
+</style>
 {% endblock %}

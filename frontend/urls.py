@@ -3,6 +3,10 @@ from . import views
 
 urlpatterns = [
     path('', views.home, name='home'),
+    path('new-collection/', views.new_collection, name='new_collection'),
+    path('men-fashion/', views.men_fashion, name='men_fashion'),
+    path('women-fashion/', views.women_fashion, name='women_fashion'),
+    path('kids-collection/', views.kids_collection, name='kids_collection'),
     path('products/', views.products, name='products'),
     path('products/<int:product_id>/', views.product_detail, name='product_detail'),
     path('cart/', views.cart, name='cart'),
@@ -13,5 +17,5 @@ urlpatterns = [
     path('forgot-password/', views.forgot_password, name='forgot_password'),
     path('reset-password/<str:token>/', views.reset_password, name='reset_password'),
     path('profile/', views.profile, name='profile'),
-    path('outfits/', views.outfits, name='outfits'),
+    path('wishlist/', views.wishlist, name='wishlist'),
 ]

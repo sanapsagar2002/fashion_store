@@ -29,9 +29,9 @@ def create_superuser():
             first_name='Admin',
             last_name='User'
         )
-        print("✅ Superuser created: admin@fashionstore.com / admin123")
+        print("Superuser created: admin@fashionstore.com / admin123")
     else:
-        print("ℹ️  Superuser already exists")
+        print("Superuser already exists")
 
 def create_categories():
     """Create product categories"""
@@ -50,9 +50,9 @@ def create_categories():
             defaults={'description': cat_data['description']}
         )
         if created:
-            print(f"✅ Created category: {category.name}")
+            print(f"Created category: {category.name}")
         else:
-            print(f"ℹ️  Category already exists: {category.name}")
+            print(f"Category already exists: {category.name}")
 
 def create_sample_products():
     """Create sample products with variants"""
@@ -143,12 +143,16 @@ def create_sample_products():
         )
         
         if created:
-            print(f"✅ Created product: {product.name}")
+            print(f"Created product: {product.name}")
             
             # Create variants
             for variant_data in variants:
+                size = variant_data['size']
+                color = variant_data['color']
+                sku = f"{product.name.replace(' ', '').upper()}-{size}-{color.upper()}"
                 ProductVariant.objects.create(
                     product=product,
+                    sku=sku,
                     **variant_data
                 )
             
@@ -159,7 +163,7 @@ def create_sample_products():
                 is_primary=True
             )
         else:
-            print(f"ℹ️  Product already exists: {product.name}")
+            print(f"Product already exists: {product.name}")
 
 def create_discount_codes():
     """Create sample discount codes"""
@@ -192,13 +196,13 @@ def create_discount_codes():
             defaults=code_data
         )
         if created:
-            print(f"✅ Created discount code: {discount.code}")
+            print(f"Created discount code: {discount.code}")
         else:
-            print(f"ℹ️  Discount code already exists: {discount.code}")
+            print(f"Discount code already exists: {discount.code}")
 
 def main():
     """Main setup function"""
-    print("🚀 Setting up Fashion Store database...")
+    print("Setting up Fashion Store database...")
     print("=" * 50)
     
     try:
@@ -208,15 +212,15 @@ def main():
         create_discount_codes()
         
         print("=" * 50)
-        print("✅ Database setup completed successfully!")
-        print("\n📋 Next steps:")
+        print("Database setup completed successfully!")
+        print("\nNext steps:")
         print("1. Run: python manage.py runserver")
         print("2. Visit: http://localhost:8000")
         print("3. Admin panel: http://localhost:8000/admin/")
         print("4. Login with: admin@fashionstore.com / admin123")
         
     except Exception as e:
-        print(f"❌ Error during setup: {e}")
+        print(f"Error during setup: {e}")
         sys.exit(1)
 
 if __name__ == '__main__':

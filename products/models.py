@@ -5,17 +5,16 @@ User = get_user_model()
 
 
 class Category(models.Model):
-    name = models.CharField(max_length=100, unique=True)
+    name = models.CharField(max_length=100)
     description = models.TextField(blank=True)
-    image = models.ImageField(upload_to='categories/', blank=True, null=True)
+    is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        verbose_name_plural = 'Categories'
 
     def __str__(self):
         return self.name
+
+    class Meta:
+        verbose_name_plural = "Categories"
 
 
 class Product(models.Model):
@@ -26,12 +25,21 @@ class Product(models.Model):
         ('U', 'Unisex'),
     ]
 
+    ACCESSORY_TYPES = [
+        ('watch', 'Watch'),
+        ('sneaker', 'Sneaker'),
+    ]
+
     name = models.CharField(max_length=200)
     description = models.TextField()
     price = models.DecimalField(max_digits=10, decimal_places=2)
+    original_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='products')
     gender = models.CharField(max_length=1, choices=GENDER_CHOICES, default='U')
     brand = models.CharField(max_length=100, blank=True)
+    is_accessory = models.BooleanField(default=False)
+    accessory_type = models.CharField(max_length=20, choices=ACCESSORY_TYPES, blank=True, null=True)
+    is_featured = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -42,47 +50,64 @@ class Product(models.Model):
     def __str__(self):
         return self.name
 
+    @property
+    def primary_image(self):
+        primary_img = self.images.filter(is_primary=True).first()
+        if primary_img:
+            return primary_img.image.url
+        first_img = self.images.first()
+        if first_img:
+            return first_img.image.url
+        return None
 
-class ProductImage(models.Model):
-    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='images')
-    image = models.ImageField(upload_to='products/')
-    is_primary = models.BooleanField(default=False)
-    created_at = models.DateTimeField(auto_now_add=True)
+    @property
+    def average_rating(self):
+        reviews = self.reviews.all()
+        if not reviews:
+            return 0
+        return sum(review.rating for review in reviews) / len(reviews)
 
-    def __str__(self):
-        return f"{self.product.name} - Image {self.id}"
+    @property
+    def total_reviews(self):
+        return self.reviews.count()
+
+    @property
+    def discount_percentage(self):
+        if self.original_price and self.original_price > self.price:
+            return round(((self.original_price - self.price) / self.original_price) * 100)
+        return 0
 
 
 class ProductVariant(models.Model):
-    SIZE_CHOICES = [
-        ('XS', 'Extra Small'),
-        ('S', 'Small'),
-        ('M', 'Medium'),
-        ('L', 'Large'),
-        ('XL', 'Extra Large'),
-        ('XXL', 'Double Extra Large'),
-        ('XXXL', 'Triple Extra Large'),
-    ]
-
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='variants')
-    size = models.CharField(max_length=10, choices=SIZE_CHOICES)
+    size = models.CharField(max_length=20)
     color = models.CharField(max_length=50)
+    sku = models.CharField(max_length=100, unique=True)
     stock_quantity = models.PositiveIntegerField(default=0)
-    sku = models.CharField(max_length=100, unique=True, blank=True)
+    price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.product.name} - {self.size} - {self.color}"
 
     class Meta:
         unique_together = ['product', 'size', 'color']
 
-    def save(self, *args, **kwargs):
-        if not self.sku:
-            self.sku = f"{self.product.id}-{self.size}-{self.color}".replace(' ', '').upper()
-        super().save(*args, **kwargs)
+
+class ProductImage(models.Model):
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='images')
+    image = models.ImageField(upload_to='products/')
+    alt_text = models.CharField(max_length=200, blank=True)
+    is_primary = models.BooleanField(default=False)
+    order = models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.product.name} - {self.size} - {self.color}"
+        return f"{self.product.name} - Image {self.order}"
+
+    class Meta:
+        ordering = ['order']
 
 
 class ProductReview(models.Model):
@@ -95,80 +120,66 @@ class ProductReview(models.Model):
     ]
 
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='reviews')
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='reviews')
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     rating = models.IntegerField(choices=RATING_CHOICES)
     title = models.CharField(max_length=200)
     comment = models.TextField()
     is_verified_purchase = models.BooleanField(default=False)
+    is_approved = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.product.name} - {self.user.email} - {self.rating} stars"
 
     class Meta:
         unique_together = ['product', 'user']
+        ordering = ['-created_at']
+
+
+class Wishlist(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='wishlist_items')
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='wishlist_items')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ['user', 'product']
+        ordering = ['-created_at']
 
     def __str__(self):
-        return f"{self.user.email} - {self.product.name} - {self.rating} stars"
+        return f"{self.user.email} - {self.product.name}"
 
 
-class OutfitRecommendation(models.Model):
-    OCCASION_CHOICES = [
-        ('casual', 'Casual'),
-        ('formal', 'Formal'),
-        ('business', 'Business'),
-        ('party', 'Party'),
-        ('date', 'Date Night'),
-        ('workout', 'Workout'),
-        ('travel', 'Travel'),
-        ('wedding', 'Wedding'),
+class ProductDiscount(models.Model):
+    DISCOUNT_TYPES = [
+        ('percentage', 'Percentage'),
+        ('fixed', 'Fixed Amount'),
     ]
 
-    SEASON_CHOICES = [
-        ('spring', 'Spring'),
-        ('summer', 'Summer'),
-        ('fall', 'Fall'),
-        ('winter', 'Winter'),
-    ]
-
-    name = models.CharField(max_length=200)
-    description = models.TextField()
-    occasion = models.CharField(max_length=20, choices=OCCASION_CHOICES)
-    season = models.CharField(max_length=20, choices=SEASON_CHOICES)
-    gender = models.CharField(max_length=1, choices=Product.GENDER_CHOICES)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='discounts', null=True, blank=True)
+    code = models.CharField(max_length=50, unique=True)
+    description = models.CharField(max_length=200)
+    discount_type = models.CharField(max_length=20, choices=DISCOUNT_TYPES)
+    discount_value = models.DecimalField(max_digits=10, decimal_places=2)
+    minimum_quantity = models.PositiveIntegerField(default=1)
+    maximum_uses = models.PositiveIntegerField(null=True, blank=True)
+    used_count = models.PositiveIntegerField(default=0)
     is_active = models.BooleanField(default=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    def __str__(self):
-        return f"{self.name} - {self.get_occasion_display()}"
-
-
-class OutfitItem(models.Model):
-    outfit = models.ForeignKey(OutfitRecommendation, on_delete=models.CASCADE, related_name='items')
-    product = models.ForeignKey(Product, on_delete=models.CASCADE)
-    item_type = models.CharField(max_length=50)  # e.g., 'top', 'bottom', 'shoes', 'accessory'
-    is_essential = models.BooleanField(default=True)  # Essential items vs optional
+    valid_from = models.DateTimeField()
+    valid_until = models.DateTimeField()
     created_at = models.DateTimeField(auto_now_add=True)
 
-    class Meta:
-        unique_together = ['outfit', 'product']
-
     def __str__(self):
-        return f"{self.outfit.name} - {self.product.name} ({self.item_type})"
+        return f"{self.product.name} - {self.code}"
 
+    def is_valid(self):
+        from django.utils import timezone
+        now = timezone.now()
+        return (
+            self.is_active and
+            self.valid_from <= now <= self.valid_until and
+            (self.maximum_uses is None or self.used_count < self.maximum_uses)
+        )
 
-class UserOutfitPreference(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='outfit_preferences')
-    occasion = models.CharField(max_length=20, choices=OutfitRecommendation.OCCASION_CHOICES)
-    season = models.CharField(max_length=20, choices=OutfitRecommendation.SEASON_CHOICES)
-    preferred_colors = models.JSONField(default=list, blank=True)
-    preferred_brands = models.JSONField(default=list, blank=True)
-    budget_min = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-    budget_max = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        unique_together = ['user', 'occasion', 'season']
-
-    def __str__(self):
-        return f"{self.user.email} - {self.get_occasion_display()} {self.get_season_display()}"
+    def can_be_used(self, quantity=1):
+        return self.is_valid() and quantity >= self.minimum_quantity

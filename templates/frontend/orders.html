@@ -28,13 +28,19 @@
 
         try {
             const response = await apiRequest('/api/orders/');
-            const orders = await response.json();
+            const data = await response.json();
             
+            // Handle both array and paginated response formats
+            const orders = data.results || data;
             displayOrders(orders);
         } catch (error) {
             console.error('Error loading orders:', error);
             document.getElementById('orders-content').innerHTML = `
-                <div class="alert alert-danger">Error loading orders</div>
+                <div class="alert alert-danger">
+                    <h4>Error loading orders</h4>
+                    <p>There was an error loading your orders. Please try again later.</p>
+                    <button class="btn btn-primary" onclick="loadOrders()">Retry</button>
+                </div>
             `;
         }
     }

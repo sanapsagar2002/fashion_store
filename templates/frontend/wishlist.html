@@ -1,0 +1,187 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}My Wishlist - Fashion Store{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-5">
+    <div class="container">
+        <div class="row">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2 class="mb-0">My Wishlist</h2>
+                    <span class="badge bg-primary" id="wishlist-count">0 items</span>
+                </div>
+                
+                <div id="wishlist-items" class="row">
+                    <!-- Wishlist items will be loaded here -->
+                </div>
+                
+                <div id="empty-wishlist" class="text-center py-5" style="display: none;">
+                    <i class="fas fa-heart fa-3x text-muted mb-3"></i>
+                    <h4 class="text-muted">Your wishlist is empty</h4>
+                    <p class="text-muted">Start adding items you love to your wishlist!</p>
+                    <a href="/products/" class="btn btn-primary">Browse Products</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    loadWishlist();
+});
+
+function loadWishlist() {
+    if (!authToken) {
+        showAlert('Please login to view your wishlist', 'warning');
+        window.location.href = '/login/';
+        return;
+    }
+    
+    apiRequest('/api/products/wishlist/')
+        .then(response => response.json())
+        .then(data => {
+            const container = document.getElementById('wishlist-items');
+            const emptyState = document.getElementById('empty-wishlist');
+            const countBadge = document.getElementById('wishlist-count');
+            
+            if (data.length === 0) {
+                container.innerHTML = '';
+                emptyState.style.display = 'block';
+                countBadge.textContent = '0 items';
+                return;
+            }
+            
+            emptyState.style.display = 'none';
+            countBadge.textContent = `${data.length} item${data.length !== 1 ? 's' : ''}`;
+            
+            container.innerHTML = data.map(item => `
+                <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+                    <div class="card h-100 product-card">
+                        <div class="position-relative">
+                            <img src="${item.product.primary_image || '/media/products/default.jpg'}" 
+                                 class="card-img-top" 
+                                 alt="${item.product.name}"
+                                 style="height: 250px; object-fit: cover;">
+                            <div class="position-absolute top-0 end-0 p-2">
+                                <button class="btn btn-sm btn-outline-danger" 
+                                        onclick="removeFromWishlist(${item.product.id})"
+                                        title="Remove from wishlist">
+                                    <i class="fas fa-heart-broken"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body d-flex flex-column">
+                            <h6 class="card-title">${item.product.name}</h6>
+                            <p class="card-text text-muted small">${item.product.brand}</p>
+                            <div class="mt-auto">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="h5 text-primary mb-0">$${item.product.price}</span>
+                                    <div class="rating">
+                                        ${generateStars(item.product.average_rating)}
+                                    </div>
+                                </div>
+                                <div class="d-grid gap-2">
+                                    <button class="btn btn-primary btn-sm" 
+                                            onclick="addToCart(${item.product.id})">
+                                        <i class="fas fa-shopping-cart me-1"></i>Add to Cart
+                                    </button>
+                                    <button class="btn btn-outline-secondary btn-sm" 
+                                            onclick="quickView(${item.product.id})">
+                                        <i class="fas fa-eye me-1"></i>Quick View
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        })
+        .catch(error => {
+            console.error('Error loading wishlist:', error);
+            showAlert('Error loading wishlist', 'danger');
+        });
+}
+
+function removeFromWishlist(productId) {
+    if (!authToken) {
+        showAlert('Please login to manage your wishlist', 'warning');
+        return;
+    }
+    
+    apiRequest(`/api/products/${productId}/wishlist/`, {
+        method: 'DELETE'
+    })
+    .then(response => {
+        if (response.ok) {
+            showAlert('Removed from wishlist', 'success');
+            loadWishlist(); // Reload the wishlist
+        } else {
+            showAlert('Failed to remove from wishlist', 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Error removing from wishlist:', error);
+        showAlert('Error removing from wishlist', 'danger');
+    });
+}
+
+function generateStars(rating) {
+    const fullStars = Math.floor(rating);
+    const hasHalfStar = rating % 1 !== 0;
+    let stars = '';
+    
+    for (let i = 0; i < fullStars; i++) {
+        stars += '<i class="fas fa-star text-warning"></i>';
+    }
+    
+    if (hasHalfStar) {
+        stars += '<i class="fas fa-star-half-alt text-warning"></i>';
+    }
+    
+    const emptyStars = 5 - Math.ceil(rating);
+    for (let i = 0; i < emptyStars; i++) {
+        stars += '<i class="far fa-star text-warning"></i>';
+    }
+    
+    return stars;
+}
+
+function addToCart(productId) {
+    if (!authToken) {
+        showAlert('Please login to add items to cart', 'warning');
+        window.location.href = '/login/';
+        return;
+    }
+    
+    apiRequest('/api/cart/add/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            product_id: productId,
+            quantity: 1
+        })
+    })
+    .then(response => {
+        if (response.ok) {
+            showAlert('Added to cart!', 'success');
+            updateCartCount();
+        } else {
+            showAlert('Failed to add to cart', 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Error adding to cart:', error);
+        showAlert('Error adding to cart', 'danger');
+    });
+}
+
+function quickView(productId) {
+    window.location.href = `/products/${productId}/`;
+}
+</script>
+{% endblock %}

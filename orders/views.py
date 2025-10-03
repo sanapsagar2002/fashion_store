@@ -56,16 +56,24 @@ def create_order_from_cart(request):
             tax_amount = subtotal * tax_rate
             shipping_cost = 10.00 if subtotal < 100 else 0.00  # Free shipping over $100
             
-            # Apply discount if provided
-            discount_amount = 0
-            if serializer.validated_data.get('discount_code'):
-                discount = DiscountCode.objects.get(code=serializer.validated_data['discount_code'])
-                if discount.discount_type == 'percentage':
-                    discount_amount = subtotal * (discount.discount_value / 100)
-                else:
-                    discount_amount = discount.discount_value
-                discount.used_count += 1
-                discount.save()
+            # Use cart's discount information
+            discount_amount = cart.discount_amount or 0
+            discount_code = cart.discount_code
+            
+            # If discount code is provided in request, validate and apply it
+            if serializer.validated_data.get('discount_code') and not discount_code:
+                try:
+                    discount = DiscountCode.objects.get(code=serializer.validated_data['discount_code'])
+                    if discount.is_valid() and subtotal >= discount.minimum_order_amount:
+                        if discount.discount_type == 'percentage':
+                            discount_amount = subtotal * (discount.discount_value / 100)
+                        else:
+                            discount_amount = discount.discount_value
+                        discount_code = discount.code
+                        discount.used_count += 1
+                        discount.save()
+                except DiscountCode.DoesNotExist:
+                    pass
             
             total_amount = subtotal + tax_amount + shipping_cost - discount_amount
 

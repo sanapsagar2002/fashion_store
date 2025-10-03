@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Category, Product, ProductImage, ProductVariant, ProductReview
+from .models import Category, Product, ProductImage, ProductVariant, ProductReview, Wishlist
 
 
 class ProductImageInline(admin.TabularInline):
@@ -48,4 +48,12 @@ class ProductReviewAdmin(admin.ModelAdmin):
     list_display = ('product', 'user', 'rating', 'title', 'is_verified_purchase', 'created_at')
     list_filter = ('rating', 'is_verified_purchase', 'created_at')
     search_fields = ('product__name', 'user__email', 'title')
+    ordering = ('-created_at',)
+
+
+@admin.register(Wishlist)
+class WishlistAdmin(admin.ModelAdmin):
+    list_display = ('user', 'product', 'created_at')
+    list_filter = ('created_at',)
+    search_fields = ('user__email', 'product__name')
     ordering = ('-created_at',)

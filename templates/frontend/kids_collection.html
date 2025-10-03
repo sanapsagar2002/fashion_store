@@ -1,0 +1,394 @@
+{% extends 'base.html' %}
+
+{% block title %}Kids Collection - Fashion Store{% endblock %}
+
+{% block content %}
+<!-- Hero Carousel Section -->
+<section class="hero-carousel">
+    <div id="heroCarousel" class="carousel slide" data-bs-ride="carousel">
+        <div class="carousel-indicators">
+            <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="0" class="active"></button>
+            <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="1"></button>
+            <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="2"></button>
+        </div>
+        <div class="carousel-inner">
+            <div class="carousel-item active">
+                <div class="hero-slide" style="background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80');">
+                    <div class="container">
+                        <div class="row align-items-center min-vh-100">
+                            <div class="col-lg-6">
+                                <h1 class="display-3 fw-bold text-white mb-4">Kids Collection</h1>
+                                <p class="lead text-white mb-4">Fun, comfortable, and stylish clothing for your little ones. Quality that lasts through all their adventures.</p>
+                                <a href="{% url 'products' %}?category=Kids" class="btn btn-primary btn-lg me-3">Shop Kids</a>
+                                <a href="{% url 'products' %}?category=Kids&accessory=sneaker" class="btn btn-outline-light btn-lg">Kids Shoes</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="carousel-item">
+                <div class="hero-slide" style="background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80');">
+                    <div class="container">
+                        <div class="row align-items-center min-vh-100">
+                            <div class="col-lg-6">
+                                <h1 class="display-3 fw-bold text-white mb-4">Playful Styles</h1>
+                                <p class="lead text-white mb-4">Colorful and comfortable clothing that kids love to wear. Perfect for playtime and everyday adventures.</p>
+                                <a href="{% url 'products' %}?category=Kids&price__lte=30" class="btn btn-primary btn-lg me-3">Affordable Kids</a>
+                                <a href="{% url 'products' %}?category=Kids&brand__icontains=H&M" class="btn btn-outline-light btn-lg">H&M Kids</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="carousel-item">
+                <div class="hero-slide" style="background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80');">
+                    <div class="container">
+                        <div class="row align-items-center min-vh-100">
+                            <div class="col-lg-6">
+                                <h1 class="display-3 fw-bold text-white mb-4">School Ready</h1>
+                                <p class="lead text-white mb-4">Durable and comfortable clothing perfect for school days. Quality materials that withstand active kids.</p>
+                                <a href="{% url 'products' %}?category=Kids&price__gte=20" class="btn btn-primary btn-lg me-3">School Collection</a>
+                                <a href="{% url 'products' %}?category=Kids&brand__icontains=Zara" class="btn btn-outline-light btn-lg">Zara Kids</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <button class="carousel-control-prev" type="button" data-bs-target="#heroCarousel" data-bs-slide="prev">
+            <span class="carousel-control-prev-icon"></span>
+        </button>
+        <button class="carousel-control-next" type="button" data-bs-target="#heroCarousel" data-bs-slide="next">
+            <span class="carousel-control-next-icon"></span>
+        </button>
+    </div>
+</section>
+
+<!-- Kids Collection Products -->
+<section class="py-5">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center mb-5">
+            <h2 class="mb-0">Kids Collection</h2>
+            <a href="{% url 'products' %}?category=Kids" class="btn btn-outline-primary">View All Kids Items</a>
+        </div>
+        <div class="row g-4" id="kids-products">
+            <!-- Products will be loaded here -->
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    async function loadKidsProducts() {
+        try {
+            const response = await fetch('/api/products/?gender=K&limit=8');
+            const data = await response.json();
+            const products = data.results || data;
+            
+            const container = document.getElementById('kids-products');
+            container.innerHTML = '';
+            
+            if (products.length === 0) {
+                showPlaceholderProducts();
+            } else {
+                products.forEach(product => {
+                    const productCard = createProductCard(product);
+                    container.appendChild(productCard);
+                });
+            }
+        } catch (error) {
+            console.error('Error loading kids products:', error);
+            showPlaceholderProducts();
+        }
+    }
+
+    function showPlaceholderProducts() {
+        const container = document.getElementById('kids-products');
+        const placeholderProducts = [
+            {
+                id: 1,
+                name: "Colorful Kids T-Shirt",
+                price: "19.99",
+                original_price: "24.99",
+                primary_image: "https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
+                average_rating: 4.5,
+                total_reviews: 128
+            },
+            {
+                id: 2,
+                name: "Kids Denim Shorts",
+                price: "24.99",
+                original_price: "29.99",
+                primary_image: "https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
+                average_rating: 4.2,
+                total_reviews: 95
+            },
+            {
+                id: 3,
+                name: "Kids Summer Dress",
+                price: "29.99",
+                original_price: "39.99",
+                primary_image: "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
+                average_rating: 4.8,
+                total_reviews: 203
+            },
+            {
+                id: 4,
+                name: "Kids Running Shoes",
+                price: "39.99",
+                original_price: "49.99",
+                primary_image: "https://images.unsplash.com/photo-1549298916-b41d501d3772?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
+                average_rating: 4.3,
+                total_reviews: 156
+            }
+        ];
+
+        placeholderProducts.forEach(product => {
+            const productCard = createProductCard(product);
+            container.appendChild(productCard);
+        });
+    }
+
+    function createProductCard(product) {
+        const col = document.createElement('div');
+        col.className = 'col-lg-3 col-md-6';
+        
+        const discountPercentage = product.original_price && product.original_price > product.price 
+            ? Math.round(((product.original_price - product.price) / product.original_price) * 100) 
+            : 0;
+        
+        col.innerHTML = `
+            <div class="card product-card h-100">
+                ${discountPercentage > 0 ? `<span class="product-badge discount-badge">-${discountPercentage}%</span>` : ''}
+                <div class="product-image-container">
+                    <img src="${product.primary_image || 'https://via.placeholder.com/300x300'}" 
+                         class="card-img-top" alt="${product.name}"
+                         onerror="this.src='https://via.placeholder.com/300x300'">
+                    <div class="product-overlay">
+                        <button class="btn btn-primary btn-sm" onclick="quickView(${product.id})">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="btn btn-outline-primary btn-sm" onclick="addToWishlist(${product.id})">
+                            <i class="fas fa-heart"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <h6 class="product-title">${product.name}</h6>
+                    <div class="product-rating">
+                        <div class="stars">${generateStars(product.average_rating || 0)}</div>
+                        <span class="rating-count">(${product.total_reviews || 0})</span>
+                    </div>
+                    <div class="product-price">
+                        <span class="current-price">$${product.price}</span>
+                        ${product.original_price && product.original_price > product.price ? 
+                            `<span class="original-price">$${product.original_price}</span>` : ''}
+                    </div>
+                    <div class="product-actions">
+                        <button class="btn btn-outline-primary btn-sm flex-fill" onclick="viewProduct(${product.id})">
+                            <i class="fas fa-eye me-1"></i>View
+                        </button>
+                        <button class="btn btn-primary btn-sm" onclick="addToCart(${product.id})">
+                            <i class="fas fa-cart-plus"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        return col;
+    }
+
+    function generateStars(rating) {
+        const fullStars = Math.floor(rating);
+        const hasHalfStar = rating % 1 !== 0;
+        let stars = '';
+        
+        for (let i = 0; i < fullStars; i++) {
+            stars += '<i class="fas fa-star text-warning"></i>';
+        }
+        
+        if (hasHalfStar) {
+            stars += '<i class="fas fa-star-half-alt text-warning"></i>';
+        }
+        
+        const emptyStars = 5 - Math.ceil(rating);
+        for (let i = 0; i < emptyStars; i++) {
+            stars += '<i class="far fa-star text-warning"></i>';
+        }
+        
+        return stars;
+    }
+
+    function viewProduct(productId) {
+        window.location.href = `/products/${productId}/`;
+    }
+
+    function quickView(productId) {
+        window.location.href = `/products/${productId}/`;
+    }
+
+    function addToWishlist(productId) {
+        if (!authToken) {
+            showAlert('Please login to add items to wishlist', 'warning');
+            return;
+        }
+        showAlert('Added to wishlist!', 'success');
+    }
+
+    function addToCart(productId) {
+        if (!authToken) {
+            showAlert('Please login to add items to cart', 'warning');
+            window.location.href = '/login/';
+            return;
+        }
+        
+        fetch(`/api/products/${productId}/variants/`)
+            .then(response => response.json())
+            .then(variants => {
+                if (variants.length > 0) {
+                    const variantId = variants[0].id;
+                    return apiRequest('/api/cart/add/', {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            product_variant_id: variantId,
+                            quantity: 1
+                        })
+                    });
+                }
+            })
+            .then(response => {
+                if (response && response.ok) {
+                    showAlert('Item added to cart!', 'success');
+                    updateCartBadge();
+                } else {
+                    showAlert('Failed to add item to cart', 'danger');
+                }
+            })
+            .catch(error => {
+                console.error('Error adding to cart:', error);
+                showAlert('Error adding item to cart', 'danger');
+            });
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        loadKidsProducts();
+    });
+</script>
+
+<style>
+/* Same styles as other pages */
+.hero-carousel {
+    position: relative;
+    overflow: hidden;
+}
+
+.hero-slide {
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+}
+
+.carousel-control-prev,
+.carousel-control-next {
+    width: 50px;
+    height: 50px;
+    background: rgba(0,0,0,0.5);
+    border-radius: 50%;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.carousel-control-prev {
+    left: 30px;
+}
+
+.carousel-control-next {
+    right: 30px;
+}
+
+.carousel-indicators {
+    bottom: 30px;
+}
+
+.carousel-indicators button {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin: 0 5px;
+}
+
+.product-image-container {
+    position: relative;
+    overflow: hidden;
+}
+
+.product-image-container img {
+    transition: transform 0.3s ease;
+}
+
+.product-card:hover .product-image-container img {
+    transform: scale(1.05);
+}
+
+.product-overlay {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.product-card:hover .product-overlay {
+    opacity: 1;
+}
+
+.product-badge {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    background: var(--success-color);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    z-index: 3;
+}
+
+.discount-badge {
+    background: var(--danger-color);
+}
+
+@media (max-width: 768px) {
+    .hero-slide {
+        min-height: 70vh;
+    }
+    
+    .display-3 {
+        font-size: 2.5rem;
+    }
+    
+    .carousel-control-prev,
+    .carousel-control-next {
+        width: 40px;
+        height: 40px;
+    }
+    
+    .carousel-control-prev {
+        left: 15px;
+    }
+    
+    .carousel-control-next {
+        right: 15px;
+    }
+}
+</style>
+{% endblock %}

@@ -33,6 +33,8 @@ INSTALLED_APPS = [
     'products',
     'cart',
     'orders',
+    'delivery',
+    'frontend',
 ]
 
 MIDDLEWARE = [
@@ -71,8 +73,8 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'fashion_store_db',
-        'USER': 'root',  # Change this to your MySQL username
-        'PASSWORD': "",  # Change this to your MySQL password
+        'USER': 'root', 
+        'PASSWORD': "",  
         'HOST':'localhost',
         'PORT': '3306',
     }
@@ -174,3 +176,8 @@ DEFAULT_FROM_EMAIL = 'noreply@fashionstore.com'
 
 # Custom user model
 AUTH_USER_MODEL = 'authentication.User'
+
+# Login URL configuration
+LOGIN_URL = '/login/'
+LOGIN_REDIRECT_URL = '/'
+LOGOUT_REDIRECT_URL = '/'

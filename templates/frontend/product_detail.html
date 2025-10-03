@@ -3,7 +3,7 @@
 {% block title %}Product Details - Fashion Store{% endblock %}
 
 {% block content %}
-<div class="container py-5">
+<div class="container py-4">
     <div class="row" id="product-detail">
         <!-- Product details will be loaded here -->
     </div>
@@ -16,6 +16,7 @@
 
     async function loadProductDetails() {
         try {
+            showLoading(true);
             const response = await fetch(`/api/products/${productId}/`);
             const product = await response.json();
             
@@ -24,7 +25,26 @@
             console.error('Error loading product details:', error);
             document.getElementById('product-detail').innerHTML = `
                 <div class="col-12">
-                    <div class="alert alert-danger">Error loading product details</div>
+                    <div class="alert alert-danger text-center">
+                        <i class="fas fa-exclamation-triangle fa-2x mb-3"></i>
+                        <h4>Error loading product details</h4>
+                        <p>Please try again later or contact support if the problem persists.</p>
+                        <a href="/products/" class="btn btn-primary">Back to Products</a>
+                    </div>
+                </div>
+            `;
+        } finally {
+            showLoading(false);
+        }
+    }
+
+    function showLoading(show) {
+        const container = document.getElementById('product-detail');
+        if (show) {
+            container.innerHTML = `
+                <div class="col-12 text-center py-5">
+                    <div class="loading"></div>
+                    <p class="mt-3">Loading product details...</p>
                 </div>
             `;
         }
@@ -33,89 +53,302 @@
     function displayProductDetails(product) {
         const container = document.getElementById('product-detail');
         
+        const discountPercentage = product.original_price && product.original_price > product.price 
+            ? Math.round(((product.original_price - product.price) / product.original_price) * 100) 
+            : 0;
+        
         container.innerHTML = `
-            <div class="col-md-6">
-                <div id="product-images">
-                    ${product.images.map((img, index) => `
-                        <img src="${img.image}" class="img-fluid mb-2 ${index === 0 ? 'active' : ''}" 
-                             alt="${product.name}" style="display: ${index === 0 ? 'block' : 'none'};">
-                    `).join('')}
-                </div>
-                <div class="row">
-                    ${product.images.map((img, index) => `
-                        <div class="col-3">
-                            <img src="${img.image}" class="img-fluid border" 
-                                 alt="${product.name}" onclick="changeMainImage(${index})" 
-                                 style="cursor: pointer;">
-                        </div>
-                    `).join('')}
+            <!-- Breadcrumb -->
+            <div class="col-12 mb-4">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="/">Home</a></li>
+                        <li class="breadcrumb-item"><a href="/products/">Products</a></li>
+                        <li class="breadcrumb-item"><a href="/products/?category=${product.gender}">${getGenderLabel(product.gender)}</a></li>
+                        <li class="breadcrumb-item active">${product.name}</li>
+                    </ol>
+                </nav>
+            </div>
+
+            <div class="col-lg-6">
+                <div class="product-image-gallery">
+                    <div class="main-image-container">
+                        <img id="main-image" src="${product.primary_image || 'https://via.placeholder.com/600x600'}" 
+                             class="img-fluid rounded" alt="${product.name}"
+                             onerror="this.src='https://via.placeholder.com/600x600'">
+                        ${discountPercentage > 0 ? `<span class="product-badge discount-badge">-${discountPercentage}%</span>` : ''}
+                        ${product.is_featured ? `<span class="product-badge featured-badge">Featured</span>` : ''}
+                    </div>
+                    
+                    <div class="thumbnail-gallery">
+                        ${product.images && product.images.length > 0 ? 
+                            product.images.map((img, index) => `
+                                <div class="thumbnail ${index === 0 ? 'active' : ''}" onclick="changeMainImage('${img.image}', ${index})">
+                                    <img src="${img.image}" alt="${product.name}" 
+                                         onerror="this.src='https://via.placeholder.com/100x100'">
+                                </div>
+                            `).join('') :
+                            `<div class="thumbnail active" onclick="changeMainImage('${product.primary_image || 'https://via.placeholder.com/600x600'}', 0)">
+                                <img src="${product.primary_image || 'https://via.placeholder.com/600x600'}" alt="${product.name}">
+                            </div>`
+                        }
+                    </div>
                 </div>
             </div>
-            <div class="col-md-6">
-                <h2>${product.name}</h2>
-                <div class="rating mb-3">
-                    ${generateStars(product.average_rating)}
-                    <span class="ms-2">(${product.total_reviews} reviews)</span>
-                </div>
-                <p class="text-muted">${product.description}</p>
-                
-                <div class="mb-3">
-                    <h4 class="text-primary">$${product.price}</h4>
-                </div>
-                
-                <form id="add-to-cart-form">
-                    <div class="mb-3">
-                        <label class="form-label">Size</label>
-                        <select class="form-select" name="size" id="size-select" required>
-                            <option value="">Select Size</option>
-                            ${getUniqueSizes(product.variants).map(size => `
-                                <option value="${size}">${size}</option>
-                            `).join('')}
-                        </select>
+            
+            <div class="col-lg-6">
+                <div class="product-info">
+                    <h1 class="product-title">${product.name}</h1>
+                    
+                    <div class="product-rating mb-3">
+                        <div class="stars">${generateStars(product.average_rating || 0)}</div>
+                        <span class="rating-text">(${product.total_reviews || 0} reviews)</span>
+                        <a href="#reviews" class="ms-2 text-decoration-none">Write a review</a>
                     </div>
                     
-                    <div class="mb-3">
-                        <label class="form-label">Color</label>
-                        <select class="form-select" name="color" id="color-select" required>
-                            <option value="">Select Color</option>
-                        </select>
+                    <div class="product-price mb-4">
+                        <span class="current-price">$${product.price}</span>
+                        ${product.original_price && product.original_price > product.price ? 
+                            `<span class="original-price">$${product.original_price}</span>` : ''}
+                        ${discountPercentage > 0 ? 
+                            `<span class="discount-percentage">Save ${discountPercentage}%</span>` : ''}
                     </div>
                     
-                    <div class="mb-3">
-                        <label class="form-label">Quantity</label>
-                        <div class="input-group" style="width: 150px;">
-                            <button class="btn btn-outline-secondary" type="button" onclick="decreaseQuantity()">-</button>
-                            <input type="number" class="form-control text-center" name="quantity" id="quantity" value="1" min="1">
-                            <button class="btn btn-outline-secondary" type="button" onclick="increaseQuantity()">+</button>
+                    <div class="product-description mb-4">
+                        <p>${product.description}</p>
+                    </div>
+                    
+                    <form id="add-to-cart-form" class="product-options">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Size *</label>
+                                <select class="form-select" name="size" id="size-select" required>
+                                    <option value="">Select Size</option>
+                                    ${getUniqueSizes(product.variants).map(size => `
+                                        <option value="${size}">${size}</option>
+                                    `).join('')}
+                                </select>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label class="form-label">Color *</label>
+                                <select class="form-select" name="color" id="color-select" required>
+                                    <option value="">Select Color</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Quantity</label>
+                                <div class="quantity-controls">
+                                    <button type="button" class="quantity-btn" onclick="decreaseQuantity()">
+                                        <i class="fas fa-minus"></i>
+                                    </button>
+                                    <input type="number" class="quantity-input" name="quantity" id="quantity" value="1" min="1" max="10">
+                                    <button type="button" class="quantity-btn" onclick="increaseQuantity()">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="stock-info">
+                                    <span id="stock-info" class="text-muted">Please select size and color</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Pincode Delivery Check -->
+                        <div class="mb-3">
+                            <label class="form-label">Check Delivery</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="pincode-input" placeholder="Enter pincode" maxlength="6">
+                                <button class="btn btn-outline-primary" type="button" onclick="checkDelivery()">
+                                    <i class="fas fa-truck"></i> Check
+                                </button>
+                            </div>
+                            <div id="delivery-info" class="mt-2"></div>
+                        </div>
+                        
+                        <!-- Product Discount Code -->
+                        <div class="mb-3">
+                            <label class="form-label">Discount Code</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="product-discount-code" placeholder="Enter discount code">
+                                <button class="btn btn-outline-success" type="button" onclick="applyProductDiscount()">
+                                    <i class="fas fa-tag"></i> Apply
+                                </button>
+                            </div>
+                            <div id="discount-info" class="mt-2"></div>
+                        </div>
+                        
+                        <div class="product-actions mb-4">
+                            <button type="submit" class="btn btn-primary btn-lg flex-fill me-2">
+                                <i class="fas fa-cart-plus me-2"></i>Add to Cart
+                            </button>
+                            <button type="button" class="btn btn-outline-primary btn-lg" onclick="addToWishlist(${product.id})">
+                                <i class="fas fa-heart"></i>
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <div class="product-features">
+                        <div class="feature-item">
+                            <i class="fas fa-shipping-fast text-primary"></i>
+                            <div>
+                                <strong>Free Shipping</strong>
+                                <p class="mb-0">On orders over $100</p>
+                            </div>
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-undo text-primary"></i>
+                            <div>
+                                <strong>Easy Returns</strong>
+                                <p class="mb-0">30-day return policy</p>
+                            </div>
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-shield-alt text-primary"></i>
+                            <div>
+                                <strong>Secure Payment</strong>
+                                <p class="mb-0">SSL encrypted checkout</p>
+                            </div>
                         </div>
                     </div>
-                    
-                    <div class="mb-3">
-                        <span id="stock-info" class="text-muted"></span>
-                    </div>
-                    
-                    <button type="submit" class="btn btn-primary btn-lg w-100">
-                        <i class="fas fa-cart-plus"></i> Add to Cart
-                    </button>
-                </form>
-                
-                <div class="mt-4">
-                    <h5>Product Details</h5>
-                    <ul class="list-unstyled">
-                        <li><strong>Category:</strong> ${product.category_name}</li>
-                        <li><strong>Gender:</strong> ${getGenderLabel(product.gender)}</li>
-                        <li><strong>Brand:</strong> ${product.brand || 'N/A'}</li>
+                </div>
+            </div>
+            
+            <!-- Product Details Tabs -->
+            <div class="col-12 mt-5">
+                <div class="product-tabs">
+                    <ul class="nav nav-tabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#description" type="button">
+                                Description
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#specifications" type="button">
+                                Specifications
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#reviews" type="button">
+                                Reviews (${product.total_reviews || 0})
+                            </button>
+                        </li>
                     </ul>
+                    <div class="tab-content">
+                        <div class="tab-pane fade show active" id="description">
+                            <div class="p-4">
+                                <h5>Product Description</h5>
+                                <p>${product.description}</p>
+                                <p>This high-quality product is designed to provide comfort and style. Made with premium materials and attention to detail, it's perfect for everyday wear.</p>
+                            </div>
+                        </div>
+                        <div class="tab-pane fade" id="specifications">
+                            <div class="p-4">
+                                <h5>Product Specifications</h5>
+                                <table class="table">
+                                    <tbody>
+                                        <tr>
+                                            <td><strong>Category</strong></td>
+                                            <td>${product.category_name || 'Fashion'}</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Gender</strong></td>
+                                            <td>${getGenderLabel(product.gender)}</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Brand</strong></td>
+                                            <td>${product.brand || 'N/A'}</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Material</strong></td>
+                                            <td>Premium Quality</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Care Instructions</strong></td>
+                                            <td>Machine washable</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="tab-pane fade" id="reviews">
+                            <div class="p-4">
+                                <h5>Customer Reviews</h5>
+                                <div id="reviews-container">
+                                    <div class="text-center py-4">
+                                        <p class="text-muted">No reviews yet. Be the first to review this product!</p>
+                                        <button class="btn btn-primary" onclick="showReviewForm()">Write a Review</button>
+                                    </div>
+                                </div>
+                                
+                                <!-- Review Form Modal -->
+                                <div class="modal fade" id="reviewModal" tabindex="-1">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">Write a Review</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <form id="review-form">
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Rating</label>
+                                                        <div class="rating-input">
+                                                            <input type="radio" name="rating" value="5" id="star5">
+                                                            <label for="star5">★</label>
+                                                            <input type="radio" name="rating" value="4" id="star4">
+                                                            <label for="star4">★</label>
+                                                            <input type="radio" name="rating" value="3" id="star3">
+                                                            <label for="star3">★</label>
+                                                            <input type="radio" name="rating" value="2" id="star2">
+                                                            <label for="star2">★</label>
+                                                            <input type="radio" name="rating" value="1" id="star1">
+                                                            <label for="star1">★</label>
+                                                        </div>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Review Title</label>
+                                                        <input type="text" class="form-control" name="title" required>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Your Review</label>
+                                                        <textarea class="form-control" name="comment" rows="4" required></textarea>
+                                                    </div>
+                                                    <div class="d-flex justify-content-end gap-2">
+                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                        <button type="submit" class="btn btn-primary">Submit Review</button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         `;
         
-        // Set up size/color interaction
+        // Set up interactions
+        setupProductInteractions(product);
+    }
+
+    function setupProductInteractions(product) {
+        // Size/color interaction
         document.getElementById('size-select').addEventListener('change', updateColorOptions);
         document.getElementById('color-select').addEventListener('change', updateStockInfo);
         
-        // Set up form submission
+        // Form submission
         document.getElementById('add-to-cart-form').addEventListener('submit', handleAddToCart);
+        
+        // Store product for later variant lookup
+        window.__currentProduct = product;
     }
 
     function getUniqueSizes(variants) {
@@ -141,9 +374,7 @@
         colorSelect.innerHTML = '<option value="">Select Color</option>';
         
         if (selectedSize) {
-            // Get colors for selected size
-            const response = await fetch(`/api/products/${productId}/`);
-            const product = await response.json();
+            const product = window.__currentProduct || { variants: [] };
             const availableColors = product.variants
                 .filter(v => v.size === selectedSize)
                 .map(v => v.color);
@@ -163,31 +394,50 @@
         const stockInfo = document.getElementById('stock-info');
         
         if (sizeSelect.value && colorSelect.value) {
-            // In a real implementation, you'd fetch stock info from the API
-            stockInfo.textContent = 'In Stock';
-            stockInfo.className = 'text-success';
+            const product = window.__currentProduct || { variants: [] };
+            const variant = product.variants.find(v => v.size === sizeSelect.value && v.color === colorSelect.value);
+            
+            if (variant) {
+                if (variant.stock_quantity > 0) {
+                    stockInfo.textContent = `${variant.stock_quantity} in stock`;
+                    stockInfo.className = 'text-success';
+                } else {
+                    stockInfo.textContent = 'Out of stock';
+                    stockInfo.className = 'text-danger';
+                }
+            } else {
+                stockInfo.textContent = 'Variant not available';
+                stockInfo.className = 'text-warning';
+            }
         } else {
             stockInfo.textContent = 'Please select size and color';
             stockInfo.className = 'text-muted';
         }
     }
 
-    function changeMainImage(index) {
-        const images = document.querySelectorAll('#product-images img');
-        images.forEach((img, i) => {
-            img.style.display = i === index ? 'block' : 'none';
+    function changeMainImage(imageSrc, index) {
+        const mainImage = document.getElementById('main-image');
+        mainImage.src = imageSrc;
+        
+        // Update thumbnail active state
+        document.querySelectorAll('.thumbnail').forEach((thumb, i) => {
+            thumb.classList.toggle('active', i === index);
         });
     }
 
     function increaseQuantity() {
         const quantityInput = document.getElementById('quantity');
-        quantityInput.value = parseInt(quantityInput.value) + 1;
+        const currentValue = parseInt(quantityInput.value);
+        if (currentValue < 10) {
+            quantityInput.value = currentValue + 1;
+        }
     }
 
     function decreaseQuantity() {
         const quantityInput = document.getElementById('quantity');
-        if (parseInt(quantityInput.value) > 1) {
-            quantityInput.value = parseInt(quantityInput.value) - 1;
+        const currentValue = parseInt(quantityInput.value);
+        if (currentValue > 1) {
+            quantityInput.value = currentValue - 1;
         }
     }
 
@@ -195,7 +445,7 @@
         e.preventDefault();
         
         if (!authToken) {
-            alert('Please login to add items to cart');
+            showAlert('Please login to add items to cart', 'warning');
             window.location.href = '/login/';
             return;
         }
@@ -203,16 +453,150 @@
         const formData = new FormData(e.target);
         const size = formData.get('size');
         const color = formData.get('color');
-        const quantity = formData.get('quantity');
+        const quantity = parseInt(formData.get('quantity') || '1', 10);
         
         if (!size || !color) {
-            alert('Please select size and color');
+            showAlert('Please select size and color', 'warning');
             return;
         }
         
-        // Find the product variant
-        // This is simplified - in reality you'd need to find the variant ID
-        showAlert('Item added to cart!', 'success');
+        const product = window.__currentProduct || { variants: [] };
+        const variant = product.variants.find(v => v.size === size && v.color === color);
+        
+        if (!variant) {
+            showAlert('Selected variant not found', 'danger');
+            return;
+        }
+
+        if (variant.stock_quantity < quantity) {
+            showAlert('Insufficient stock', 'danger');
+            return;
+        }
+
+        apiRequest('/api/cart/add/', {
+            method: 'POST',
+            body: JSON.stringify({
+                product_variant_id: variant.id,
+                quantity: quantity
+            })
+        }).then(async (response) => {
+            if (response && response.ok) {
+                updateCartBadge();
+                if (response.status === 201) {
+                    showAlert('Item added to cart!', 'success');
+                } else {
+                    showAlert('Item quantity updated!', 'info');
+                }
+            } else {
+                const err = response ? await response.json() : { error: 'Failed to add' };
+                showAlert(err.error || 'Failed to add to cart', 'danger');
+            }
+        }).catch(() => {
+            showAlert('Failed to add to cart', 'danger');
+        });
+    }
+
+    function addToWishlist(productId) {
+        if (!authToken) {
+            showAlert('Please login to add items to wishlist', 'warning');
+            return;
+        }
+        showAlert('Added to wishlist!', 'success');
+    }
+
+    function checkDelivery() {
+        const pincode = document.getElementById('pincode-input').value.trim();
+        const deliveryInfo = document.getElementById('delivery-info');
+        
+        if (!pincode) {
+            deliveryInfo.innerHTML = '<small class="text-muted">Please enter a pincode</small>';
+            return;
+        }
+        
+        if (pincode.length !== 6 || !/^\d{6}$/.test(pincode)) {
+            deliveryInfo.innerHTML = '<small class="text-danger">Please enter a valid 6-digit pincode</small>';
+            return;
+        }
+        
+        deliveryInfo.innerHTML = '<small class="text-info"><i class="fas fa-spinner fa-spin"></i> Checking delivery...</small>';
+        
+        fetch(`/api/delivery/check/${pincode}/`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.is_deliverable) {
+                    deliveryInfo.innerHTML = `
+                        <small class="text-success">
+                            <i class="fas fa-check-circle"></i> 
+                            Delivery available to ${data.location}
+                            ${data.delivery_charge > 0 ? ` - ₹${data.delivery_charge} delivery charge` : ' - FREE delivery'}
+                            (${data.estimated_days} days)
+                        </small>
+                    `;
+                } else {
+                    deliveryInfo.innerHTML = `
+                        <small class="text-danger">
+                            <i class="fas fa-times-circle"></i> 
+                            Delivery not available to ${data.location}
+                        </small>
+                    `;
+                }
+            })
+            .catch(error => {
+                console.error('Error checking delivery:', error);
+                deliveryInfo.innerHTML = '<small class="text-danger">Error checking delivery. Please try again.</small>';
+            });
+    }
+
+    function applyProductDiscount() {
+        const code = document.getElementById('product-discount-code').value.trim();
+        const discountInfo = document.getElementById('discount-info');
+        const quantity = parseInt(document.getElementById('quantity').value) || 1;
+        
+        if (!code) {
+            discountInfo.innerHTML = '<small class="text-muted">Please enter a discount code</small>';
+            return;
+        }
+        
+        if (!authToken) {
+            showAlert('Please login to apply discount codes', 'warning');
+            return;
+        }
+        
+        discountInfo.innerHTML = '<small class="text-info"><i class="fas fa-spinner fa-spin"></i> Applying discount...</small>';
+        
+        fetch(`/api/products/${productId}/apply-discount/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authToken}`
+            },
+            body: JSON.stringify({
+                code: code,
+                quantity: quantity
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.message) {
+                discountInfo.innerHTML = `
+                    <small class="text-success">
+                        <i class="fas fa-check-circle"></i> 
+                        ${data.message}
+                        <br>You save: ₹${data.savings}
+                        <br>Discounted price: ₹${data.discounted_price}
+                    </small>
+                `;
+                showAlert(data.message, 'success');
+            } else {
+                discountInfo.innerHTML = `<small class="text-danger"><i class="fas fa-times-circle"></i> ${data.error}</small>`;
+                showAlert(data.error, 'danger');
+            }
+        })
+        .catch(error => {
+            console.error('Error applying discount:', error);
+            discountInfo.innerHTML = '<small class="text-danger">Error applying discount. Please try again.</small>';
+            showAlert('Error applying discount', 'danger');
+        });
     }
 
     function generateStars(rating) {
@@ -236,9 +620,369 @@
         return stars;
     }
 
+    // Review functions
+    function showReviewForm() {
+        const authToken = localStorage.getItem('authToken');
+        if (!authToken) {
+            showAlert('Please login to write a review', 'warning');
+            window.location.href = '/login/';
+            return;
+        }
+        
+        const modal = new bootstrap.Modal(document.getElementById('reviewModal'));
+        modal.show();
+    }
+
+    function submitReview(event) {
+        event.preventDefault();
+        
+        const formData = new FormData(event.target);
+        const reviewData = {
+            rating: formData.get('rating'),
+            title: formData.get('title'),
+            comment: formData.get('comment')
+        };
+        
+        const productId = window.location.pathname.split('/')[2];
+        const authToken = localStorage.getItem('authToken');
+        
+        apiRequest(`/api/products/${productId}/reviews/`, {
+            method: 'POST',
+            body: JSON.stringify(reviewData)
+        })
+        .then(response => {
+            if (response.ok) {
+                showAlert('Review submitted successfully!', 'success');
+                const modal = bootstrap.Modal.getInstance(document.getElementById('reviewModal'));
+                modal.hide();
+                event.target.reset();
+                loadReviews();
+            } else {
+                showAlert('Failed to submit review', 'danger');
+            }
+        })
+        .catch(error => {
+            console.error('Error submitting review:', error);
+            showAlert('Error submitting review', 'danger');
+        });
+    }
+
+    function loadReviews() {
+        const productId = window.location.pathname.split('/')[2];
+        
+        apiRequest(`/api/products/${productId}/reviews/`)
+        .then(response => response.json())
+        .then(data => {
+            const container = document.getElementById('reviews-container');
+            if (data.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-4">
+                        <p class="text-muted">No reviews yet. Be the first to review this product!</p>
+                        <button class="btn btn-primary" onclick="showReviewForm()">Write a Review</button>
+                    </div>
+                `;
+            } else {
+                let reviewsHtml = '';
+                data.forEach(review => {
+                    reviewsHtml += `
+                        <div class="review-item border-bottom pb-3 mb-3">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h6 class="mb-1">${review.title}</h6>
+                                    <div class="rating mb-2">${generateStars(review.rating)}</div>
+                                    <p class="text-muted mb-1">By ${review.user_name || 'Anonymous'}</p>
+                                </div>
+                                <small class="text-muted">${new Date(review.created_at).toLocaleDateString()}</small>
+                            </div>
+                            <p class="mb-0">${review.comment}</p>
+                        </div>
+                    `;
+                });
+                container.innerHTML = reviewsHtml + `
+                    <div class="text-center mt-3">
+                        <button class="btn btn-primary" onclick="showReviewForm()">Write a Review</button>
+                    </div>
+                `;
+            }
+        })
+        .catch(error => {
+            console.error('Error loading reviews:', error);
+        });
+    }
+
     // Load product details on page load
     document.addEventListener('DOMContentLoaded', function() {
         loadProductDetails();
+        loadReviews();
+        
+        // Set up review form submission
+        document.getElementById('review-form').addEventListener('submit', submitReview);
     });
 </script>
+
+<style>
+/* Product Detail Styles */
+.product-image-gallery {
+    position: sticky;
+    top: 20px;
+}
+
+.main-image-container {
+    position: relative;
+    margin-bottom: 1rem;
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
+
+.main-image-container img {
+    width: 100%;
+    height: 500px;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.main-image-container:hover img {
+    transform: scale(1.05);
+}
+
+.thumbnail-gallery {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.thumbnail {
+    width: 80px;
+    height: 80px;
+    border-radius: 10px;
+    overflow: hidden;
+    cursor: pointer;
+    border: 3px solid transparent;
+    transition: all 0.3s ease;
+}
+
+.thumbnail:hover,
+.thumbnail.active {
+    border-color: var(--primary-color);
+    transform: scale(1.05);
+}
+
+.thumbnail img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.product-info {
+    padding-left: 2rem;
+}
+
+.product-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--dark-color);
+    margin-bottom: 1rem;
+}
+
+.product-rating {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.rating-text {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.product-price {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.current-price {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--primary-color);
+}
+
+.original-price {
+    font-size: 1.2rem;
+    color: var(--text-muted);
+    text-decoration: line-through;
+}
+
+.discount-percentage {
+    background: var(--success-color);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.product-options {
+    background: var(--light-gray);
+    padding: 1.5rem;
+    border-radius: 15px;
+    margin-bottom: 2rem;
+}
+
+.quantity-controls {
+    display: flex;
+    align-items: center;
+    border: 2px solid #e9ecef;
+    border-radius: 10px;
+    overflow: hidden;
+    width: 120px;
+}
+
+.quantity-btn {
+    background: var(--white);
+    border: none;
+    padding: 0.75rem;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.quantity-btn:hover {
+    background: var(--light-gray);
+}
+
+.quantity-input {
+    border: none;
+    text-align: center;
+    width: 60px;
+    padding: 0.75rem 0;
+    font-weight: 600;
+}
+
+.product-actions {
+    display: flex;
+    gap: 1rem;
+}
+
+.product-features {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.feature-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--light-gray);
+    border-radius: 10px;
+}
+
+.feature-item i {
+    font-size: 1.5rem;
+    width: 30px;
+}
+
+.product-tabs {
+    background: var(--white);
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    overflow: hidden;
+}
+
+.nav-tabs {
+    border-bottom: 2px solid var(--light-gray);
+    padding: 0 1rem;
+}
+
+.nav-tabs .nav-link {
+    border: none;
+    color: var(--text-muted);
+    font-weight: 600;
+    padding: 1rem 1.5rem;
+    transition: all 0.3s ease;
+}
+
+.nav-tabs .nav-link.active {
+    color: var(--primary-color);
+    background: transparent;
+    border-bottom: 3px solid var(--primary-color);
+}
+
+.tab-content {
+    min-height: 200px;
+}
+
+.loading {
+    width: 50px;
+    height: 50px;
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid var(--primary-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Review Form Styles */
+.rating-input {
+    display: flex;
+    flex-direction: row-reverse;
+    gap: 5px;
+}
+
+.rating-input input[type="radio"] {
+    display: none;
+}
+
+.rating-input label {
+    font-size: 2rem;
+    color: #ddd;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.rating-input input[type="radio"]:checked ~ label,
+.rating-input label:hover,
+.rating-input label:hover ~ label {
+    color: #ffc107;
+}
+
+.review-item {
+    background: #f8f9fa;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+}
+
+@media (max-width: 768px) {
+    .product-info {
+        padding-left: 0;
+        margin-top: 2rem;
+    }
+    
+    .product-title {
+        font-size: 2rem;
+    }
+    
+    .current-price {
+        font-size: 1.5rem;
+    }
+    
+    .product-actions {
+        flex-direction: column;
+    }
+    
+    .feature-item {
+        flex-direction: column;
+        text-align: center;
+    }
+}
+</style>
 {% endblock %}
