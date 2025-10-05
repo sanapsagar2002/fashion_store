@@ -13,7 +13,10 @@
         </div>
         <div class="carousel-inner">
             <div class="carousel-item active">
-                <div class="hero-slide" style="background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80');">
+                <div class="hero-slide">
+                    <div class="hero-image-frame">
+                        <img src="/media/products/sneaker_kids_1.jpg" alt="Kids Collection" class="hero-image">
+                    </div>
                     <div class="container">
                         <div class="row align-items-center min-vh-100">
                             <div class="col-lg-6">
@@ -27,7 +30,10 @@
                 </div>
             </div>
             <div class="carousel-item">
-                <div class="hero-slide" style="background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80');">
+                <div class="hero-slide">
+                    <div class="hero-image-frame">
+                        <img src="/media/products/t_shirt_kids_1.jpg" alt="Playful Styles" class="hero-image">
+                    </div>
                     <div class="container">
                         <div class="row align-items-center min-vh-100">
                             <div class="col-lg-6">
@@ -41,7 +47,10 @@
                 </div>
             </div>
             <div class="carousel-item">
-                <div class="hero-slide" style="background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80');">
+                <div class="hero-slide">
+                    <div class="hero-image-frame">
+                        <img src="/media/products/sneaker_kids_2.jpg" alt="School Ready" class="hero-image">
+                    </div>
                     <div class="container">
                         <div class="row align-items-center min-vh-100">
                             <div class="col-lg-6">
@@ -169,9 +178,6 @@
                         <button class="btn btn-primary btn-sm" onclick="quickView(${product.id})">
                             <i class="fas fa-eye"></i>
                         </button>
-                        <button class="btn btn-outline-primary btn-sm" onclick="addToWishlist(${product.id})">
-                            <i class="fas fa-heart"></i>
-                        </button>
                     </div>
                 </div>
                 <div class="card-body">
@@ -229,13 +235,6 @@
         window.location.href = `/products/${productId}/`;
     }
 
-    function addToWishlist(productId) {
-        if (!authToken) {
-            showAlert('Please login to add items to wishlist', 'warning');
-            return;
-        }
-        showAlert('Added to wishlist!', 'success');
-    }
 
     function addToCart(productId) {
         if (!authToken) {
@@ -285,12 +284,28 @@
 }
 
 .hero-slide {
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
+    background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4));
     min-height: 100vh;
     display: flex;
     align-items: center;
+    position: relative;
+}
+
+.hero-image-frame {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    overflow: hidden;
+}
+
+.hero-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
 }
 
 .carousel-control-prev,

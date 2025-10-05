@@ -28,10 +28,10 @@ def create_product_images():
         'jeans_women': ['blue_denim_jeans_1.jpg', 'blue_denim_jeans_2.jpg'],
         
         # Dresses
-        'dress_women': ['elegant_black_dress_1.jpg'],
+        'dress_women': ['elegant_black_dress_1.jpg', 'elegant_black_dress_2.jpg'],
         
         # Default/Watch images
-        'watch': ['classic_white_t-shirt_1.jpg'],  # Using t-shirt as placeholder until we get proper watch images
+        'watch': ['digital sports watch.jpg', 'elegant womens watch.jpg', 'classic analog watch.jpg'],  # Using t-shirt as placeholder until we get proper watch images
     }
     
     print("Setting up product images...")

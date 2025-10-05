@@ -183,3 +183,47 @@ class ProductDiscount(models.Model):
 
     def can_be_used(self, quantity=1):
         return self.is_valid() and quantity >= self.minimum_quantity
+
+
+class GlobalDiscountCoupon(models.Model):
+    DISCOUNT_TYPES = [
+        ('percentage', 'Percentage'),
+        ('fixed', 'Fixed Amount'),
+    ]
+
+    code = models.CharField(max_length=50, unique=True)
+    description = models.CharField(max_length=200)
+    discount_type = models.CharField(max_length=20, choices=DISCOUNT_TYPES)
+    discount_value = models.DecimalField(max_digits=10, decimal_places=2)
+    minimum_order_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    maximum_discount_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    maximum_uses = models.PositiveIntegerField(null=True, blank=True)
+    used_count = models.PositiveIntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+    valid_from = models.DateTimeField()
+    valid_until = models.DateTimeField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Global Coupon - {self.code}"
+
+    def is_valid(self):
+        from django.utils import timezone
+        now = timezone.now()
+        return (
+            self.is_active and
+            self.valid_from <= now <= self.valid_until and
+            (self.maximum_uses is None or self.used_count < self.maximum_uses)
+        )
+
+    def calculate_discount(self, order_amount):
+        if not self.is_valid() or order_amount < self.minimum_order_amount:
+            return 0
+        
+        if self.discount_type == 'percentage':
+            discount = (order_amount * self.discount_value) / 100
+            if self.maximum_discount_amount:
+                discount = min(discount, self.maximum_discount_amount)
+            return discount
+        else:  # fixed
+            return min(self.discount_value, order_amount)

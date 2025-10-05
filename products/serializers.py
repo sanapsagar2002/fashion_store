@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Category, Product, ProductImage, ProductVariant, ProductReview, ProductDiscount, Wishlist
+from .models import Category, Product, ProductImage, ProductVariant, ProductReview, ProductDiscount, Wishlist, GlobalDiscountCoupon
 from authentication.models import User
 
 
@@ -158,3 +158,10 @@ class ProductDiscountSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductDiscount
         fields = ['id', 'code', 'description', 'discount_type', 'discount_value', 'minimum_quantity', 'maximum_uses', 'used_count', 'is_active', 'valid_from', 'valid_until']
+
+
+# Global Discount Coupon Serializer
+class GlobalDiscountCouponSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = GlobalDiscountCoupon
+        fields = ['id', 'code', 'description', 'discount_type', 'discount_value', 'minimum_order_amount', 'maximum_discount_amount', 'maximum_uses', 'used_count', 'is_active', 'valid_from', 'valid_until']

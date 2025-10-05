@@ -15,15 +15,19 @@
             <div class="carousel-item active">
                 <div class="hero-slide">
                     <div class="hero-image-frame">
-                        <img src="/media/products/elegant_black_dress_1.jpg" alt="New Collection" class="hero-image">
+                        <img src="/media/products/clock.jpg" alt="New Collection" class="hero-image" height="3">
                     </div>
                     <div class="container">
                         <div class="row align-items-center min-vh-100">
                             <div class="col-lg-6">
                                 <h1 class="display-3 fw-bold text-white mb-4">New Collection</h1>
                                 <p class="lead text-white mb-4">Discover the latest trends in fashion. From casual wear to formal attire, express your unique style.</p>
+                              <!--
                                 <a href="{% url 'new_collection' %}" class="btn btn-primary btn-lg me-3">New Collection</a>
-                                <a href="{% url 'products' %}" class="btn btn-outline-light btn-lg">Shop All</a>
+                              -->
+                            
+                        
+                                <a href="{% url 'products' %}" class="btn btn-primary btn-lg me-3">Shop All</a>
                             </div>
                         </div>
                     </div>
@@ -49,7 +53,8 @@
             <div class="carousel-item">
                 <div class="hero-slide">
                     <div class="hero-image-frame">
-                        <img src="/media/products/comfortable_sneakers_1.jpg" alt="Kids Collection" class="hero-image">
+                    <img src="/media/products/sneaker_kids_1.jpg" alt="Kids Collection" class="hero-image">
+               
                     </div>
                     <div class="container">
                         <div class="row align-items-center min-vh-100">
@@ -292,41 +297,56 @@
         const discountPercentage = product.original_price && product.original_price > product.price 
             ? Math.round(((product.original_price - product.price) / product.original_price) * 100) 
             : 0;
+        // Ensure correct imagery by type if primary_image is missing/wrong
+        const typeToImage = {
+            't shirt': '/media/products/t_shirt_men_1.jpg',
+            't-shirt': '/media/products/t_shirt_men_1.jpg',
+            'watch': '/media/products/watch_1.jpg',
+            'sneaker': '/media/products/comfortable_sneakers_1.jpg',
+            'jeans': '/media/products/blue_denim_jeans_1.jpg',
+            'dress': '/media/products/elegant_black_dress_1.jpg'
+        };
+        const nameLower = (product.name || '').toLowerCase();
+        let fallbackImg = null;
+        for (const key in typeToImage) {
+            if (nameLower.includes(key)) { fallbackImg = typeToImage[key]; break; }
+        }
+        const imageSrc = product.primary_image || fallbackImg || 'https://via.placeholder.com/300x300';
         
         col.innerHTML = `
             <div class="card product-card h-100">
                 ${discountPercentage > 0 ? `<span class="product-badge discount-badge">-${discountPercentage}%</span>` : ''}
                 <div class="product-image-container">
-                    <img src="${product.primary_image || 'https://via.placeholder.com/300x300'}" 
+                    <img src="${imageSrc}" 
                          class="card-img-top" alt="${product.name}"
                          onerror="this.src='https://via.placeholder.com/300x300'">
                     <div class="product-overlay">
                         <button class="btn btn-primary btn-sm" onclick="quickView(${product.id})">
                             <i class="fas fa-eye"></i>
                         </button>
+                        <!--
                         <button class="btn btn-outline-primary btn-sm" onclick="addToWishlist(${product.id})">
                             <i class="fas fa-heart"></i>
                         </button>
+                        -->
                     </div>
                 </div>
                 <div class="card-body">
                     <h6 class="product-title">${product.name}</h6>
-                    <div class="product-rating">
-                        <div class="stars">${generateStars(product.average_rating || 0)}</div>
-                        <span class="rating-count">(${product.total_reviews || 0})</span>
-                    </div>
                     <div class="product-price">
                         <span class="current-price">$${product.price}</span>
                         ${product.original_price && product.original_price > product.price ? 
                             `<span class="original-price">$${product.original_price}</span>` : ''}
                     </div>
                     <div class="product-actions">
-                        <button class="btn btn-outline-primary btn-sm flex-fill" onclick="viewProduct(${product.id})">
-                            <i class="fas fa-eye me-1"></i>View
+                        <button class="btn btn-primary btn-sm" onclick="quickView(${product.id})">
+                            <i class="fas fa-eye"></i>
                         </button>
+                       <!--
                         <button class="btn btn-primary btn-sm" onclick="addToCart(${product.id})">
                             <i class="fas fa-cart-plus"></i>
                         </button>
+                        -->
                     </div>
                 </div>
             </div>
@@ -393,7 +413,7 @@
             window.location.href = '/login/';
             return;
         }
-        
+       
         // Simplified - add first variant
         fetch(`/api/products/${productId}/variants/`)
             .then(response => response.json())
@@ -422,7 +442,8 @@
                 showAlert('Error adding item to cart', 'danger');
             });
     }
-
+  
+    
     // Load featured products on page load
     document.addEventListener('DOMContentLoaded', function() {
         loadFeaturedProducts();

@@ -1,7 +1,9 @@
+
 #!/usr/bin/env python
 """
 Script to set up proper product images using existing images
 """
+
 import os
 import shutil
 from pathlib import Path
@@ -31,7 +33,7 @@ def setup_product_images():
     image_mappings = {
         't-shirt': ['classic_white_t-shirt_1.jpg', 'classic_white_t-shirt_2.jpg'],
         'jeans': ['blue_denim_jeans_1.jpg', 'blue_denim_jeans_2.jpg'],
-        'dress': ['elegant_black_dress_1.jpg', 'summer_floral_dress_1.jpg'],
+        'dress': ['summer_floral_dress_1.jpg', 'elegant_black_dress_1.jpg' ],
         'sneakers': ['comfortable_sneakers_1.jpg', 'comfortable_sneakers_2.jpg'],
         'shoes': ['comfortable_sneakers_1.jpg', 'comfortable_sneakers_2.jpg'],
         'watch': ['elegant_womens_watch_1.jpg', 'digital_sports_watch_1.jpg'],
@@ -74,6 +76,7 @@ def setup_product_images():
         
         # Get images for this product type
         available_images = image_mappings.get(product_type, image_mappings['t-shirt'])
+        
         
         # Use existing images or create new ones
         for j, image_name in enumerate(available_images):
@@ -146,3 +149,4 @@ def setup_product_images():
 
 if __name__ == "__main__":
     setup_product_images()
+

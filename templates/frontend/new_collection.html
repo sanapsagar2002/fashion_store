@@ -107,7 +107,6 @@
         const container = document.getElementById('new-collection-products');
         const placeholderProducts = [
             {
-                id: 1,
                 name: "New Arrival T-Shirt",
                 price: "39.99",
                 original_price: "49.99",
@@ -169,9 +168,10 @@
                         <button class="btn btn-primary btn-sm" onclick="quickView(${product.id})">
                             <i class="fas fa-eye"></i>
                         </button>
-                        <button class="btn btn-outline-primary btn-sm" onclick="addToWishlist(${product.id})">
+                      <!--  <button class="btn btn-outline-primary btn-sm" onclick="addToWishlist(${product.id})">
                             <i class="fas fa-heart"></i>
                         </button>
+                        -->
                     </div>
                 </div>
                 <div class="card-body">
@@ -186,9 +186,11 @@
                             `<span class="original-price">$${product.original_price}</span>` : ''}
                     </div>
                     <div class="product-actions">
+                        <!--
                         <button class="btn btn-outline-primary btn-sm flex-fill" onclick="viewProduct(${product.id})">
                             <i class="fas fa-eye me-1"></i>View
                         </button>
+                        -->
                         <button class="btn btn-primary btn-sm" onclick="addToCart(${product.id})">
                             <i class="fas fa-cart-plus"></i>
                         </button>

@@ -4,10 +4,10 @@ from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 from django.db import transaction
+from decimal import Decimal
 from .models import Order, OrderItem, DiscountCode
 from .serializers import OrderSerializer, OrderCreateSerializer, DiscountCodeSerializer
 from cart.models import Cart, CartItem
-
 
 class OrderListCreateView(generics.ListCreateAPIView):
     serializer_class = OrderSerializer
@@ -34,6 +34,17 @@ class OrderDetailView(generics.RetrieveUpdateDestroyAPIView):
         return Order.objects.filter(user=self.request.user)
 
 
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def clear_order_history(request):
+    try:
+        orders = Order.objects.filter(user=request.user)
+        deleted_count = orders.count()
+        orders.delete()
+        return Response({'message': f'{deleted_count} orders deleted successfully.'}, status=status.HTTP_200_OK)
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def create_order_from_cart(request):
@@ -52,12 +63,12 @@ def create_order_from_cart(request):
         with transaction.atomic():
             # Calculate totals
             subtotal = sum(item.total_price for item in cart_items)
-            tax_rate = 0.08  # 8% tax rate
+            tax_rate = Decimal('0.08')  # 8% tax rate
             tax_amount = subtotal * tax_rate
-            shipping_cost = 10.00 if subtotal < 100 else 0.00  # Free shipping over $100
+            shipping_cost = Decimal('0.00') if subtotal >= Decimal('100.00') else Decimal('10.00')  # Free shipping over $100
             
             # Use cart's discount information
-            discount_amount = cart.discount_amount or 0
+            discount_amount = cart.discount_amount or Decimal('0.00')
             discount_code = cart.discount_code
             
             # If discount code is provided in request, validate and apply it
@@ -66,9 +77,9 @@ def create_order_from_cart(request):
                     discount = DiscountCode.objects.get(code=serializer.validated_data['discount_code'])
                     if discount.is_valid() and subtotal >= discount.minimum_order_amount:
                         if discount.discount_type == 'percentage':
-                            discount_amount = subtotal * (discount.discount_value / 100)
+                            discount_amount = (subtotal * discount.discount_value) / Decimal('100')
                         else:
-                            discount_amount = discount.discount_value
+                            discount_amount = Decimal(discount.discount_value)
                         discount_code = discount.code
                         discount.used_count += 1
                         discount.save()

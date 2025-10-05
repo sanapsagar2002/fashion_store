@@ -4,7 +4,14 @@
 
 {% block content %}
 <div class="container py-5">
-    <h2 class="mb-4">My Orders</h2>
+   <!-- <h2 class="mb-4">My Orders</h2>-->
+    <h2 class="mb-4 d-flex justify-content-between align-items-center">
+    <span>My Orders</span>
+    <button class="btn btn-outline-danger btn-sm" onclick="clearOrderHistory()">
+        <i class="fas fa-trash-alt me-1"></i> Clear Order History
+    </button>
+</h2>
+
     
     <div id="orders-content">
         <!-- Orders will be loaded here -->
@@ -32,6 +39,8 @@
             
             // Handle both array and paginated response formats
             const orders = data.results || data;
+            // Store orders data for details modal
+            sessionStorage.setItem('ordersData', JSON.stringify(orders));
             displayOrders(orders);
         } catch (error) {
             console.error('Error loading orders:', error);
@@ -44,6 +53,45 @@
             `;
         }
     }
+
+
+    async function clearOrderHistory() {
+    if (!authToken) {
+        alert("Please login to clear your order history.");
+        return;
+    }
+
+    if (!confirm("Are you sure you want to permanently delete your order history?")) return;
+
+    try {
+        const response = await fetch('/api/orders/clear/', {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${authToken}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            alert(data.message || "Order history cleared successfully!");
+            sessionStorage.removeItem('ordersData');
+            document.getElementById('orders-content').innerHTML = `
+                <div class="alert alert-info text-center">
+                    <h4>Order history cleared</h4>
+                    <p>You can start fresh by placing a new order.</p>
+                    <a href="/products/" class="btn btn-primary">Shop Now</a>
+                </div>
+            `;
+        } else {
+            alert(data.error || "Failed to clear order history.");
+        }
+    } catch (error) {
+        console.error("Error:", error);
+        alert("An error occurred while clearing order history.");
+    }
+}
 
     function displayOrders(orders) {
         const container = document.getElementById('orders-content');
@@ -70,8 +118,8 @@
                                     <small class="text-muted">Placed on ${new Date(order.created_at).toLocaleDateString()}</small>
                                 </div>
                                 <div>
-                                    <span class="badge bg-${getStatusColor(order.status)}">${order.status}</span>
-                                    <span class="badge bg-${getPaymentStatusColor(order.payment_status)} ms-2">${order.payment_status}</span>
+                                    <span class="badge bg-success">Success</span>
+                                    <span class="badge bg-success ms-2">Paid</span>
                                 </div>
                             </div>
                             <div class="card-body">
@@ -108,6 +156,8 @@
             </div>
         `;
     }
+    
+  
 
     function getStatusColor(status) {
         const colors = {
@@ -132,8 +182,125 @@
     }
 
     function viewOrderDetails(orderId) {
-        // In a real implementation, you'd show a modal or navigate to a details page
-        alert(`Order details for order #${orderId}`);
+        // Find the order data
+        const orders = JSON.parse(sessionStorage.getItem('ordersData') || '[]');
+        const order = orders.find(o => o.id === orderId);
+        if (!order) {
+            showAlert('Order not found', 'danger');
+            return;
+        }
+
+        // Create detailed order modal
+        const modal = document.createElement('div');
+        modal.className = 'modal fade';
+        modal.id = 'orderDetailsModal';
+        modal.innerHTML = `
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="fas fa-receipt me-2"></i>Order Details #${order.order_number}
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>Shipping Information</h6>
+                                <div class="card">
+                                    <div class="card-body">
+                                        <p><strong>Address:</strong> ${order.shipping_address}</p>
+                                        <p><strong>City:</strong> ${order.shipping_city}</p>
+                                        <p><strong>State:</strong> ${order.shipping_state}</p>
+                                        <p><strong>ZIP:</strong> ${order.shipping_zip}</p>
+                                        <p><strong>Country:</strong> ${order.shipping_country}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>Order Summary</h6>
+                                <div class="card">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between">
+                                            <span>Subtotal:</span>
+                                            <span>$${order.subtotal}</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between">
+                                            <span>Tax:</span>
+                                            <span>$${order.tax_amount}</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between">
+                                            <span>Shipping:</span>
+                                            <span>$${order.shipping_cost}</span>
+                                        </div>
+                                        ${order.discount_amount > 0 ? `
+                                            <div class="d-flex justify-content-between text-success">
+                                                <span>Discount:</span>
+                                                <span>-$${order.discount_amount}</span>
+                                            </div>
+                                        ` : ''}
+                                        <hr>
+                                        <div class="d-flex justify-content-between">
+                                            <strong>Total:</strong>
+                                            <strong>$${order.total_amount}</strong>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-4">
+                            <h6>Order Items</h6>
+                            <div class="table-responsive">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Product</th>
+                                            <th>Size</th>
+                                            <th>Color</th>
+                                            <th>Quantity</th>
+                                            <th>Price</th>
+                                            <th>Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${order.items.map(item => `
+                                            <tr>
+                                                <td>${item.product_variant.product.name}</td>
+                                                <td>${item.product_variant.size}</td>
+                                                <td>${item.product_variant.color}</td>
+                                                <td>${item.quantity}</td>
+                                                <td>$${item.price}</td>
+                                                <td>$${item.total_price}</td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        ${order.notes ? `
+                            <div class="mt-3">
+                                <h6>Order Notes</h6>
+                                <p class="text-muted">${order.notes}</p>
+                            </div>
+                        ` : ''}
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        const bsModal = new bootstrap.Modal(modal);
+        bsModal.show();
+        
+        // Remove modal when hidden
+        modal.addEventListener('hidden.bs.modal', function() {
+            document.body.removeChild(modal);
+        });
     }
 
     // Load orders on page load

@@ -73,7 +73,7 @@
             <div class="col-lg-6">
                 <div class="product-image-gallery">
                     <div class="main-image-container">
-                        <img id="main-image" src="${product.primary_image || 'https://via.placeholder.com/600x600'}" 
+                        <img id="main-image" src="${product.primary_image || (product.images && product.images[0] && product.images[0].image) || 'https://via.placeholder.com/600x600'}" 
                              class="img-fluid rounded" alt="${product.name}"
                              onerror="this.src='https://via.placeholder.com/600x600'">
                         ${discountPercentage > 0 ? `<span class="product-badge discount-badge">-${discountPercentage}%</span>` : ''}
@@ -81,17 +81,27 @@
                     </div>
                     
                     <div class="thumbnail-gallery">
-                        ${product.images && product.images.length > 0 ? 
-                            product.images.map((img, index) => `
-                                <div class="thumbnail ${index === 0 ? 'active' : ''}" onclick="changeMainImage('${img.image}', ${index})">
-                                    <img src="${img.image}" alt="${product.name}" 
-                                         onerror="this.src='https://via.placeholder.com/100x100'">
+                        ${(() => {
+                            const images = (product.images || []).map(i => i.image);
+                            const unique = [];
+                            const seen = new Set();
+                            images.forEach(src => { 
+                                const key = String(src || ''); 
+                                if (!seen.has(key) && src) { 
+                                    seen.add(key); 
+                                    unique.push(src); 
+                                } 
+                            });
+                            if (unique.length === 0) {
+                                const fallback = product.primary_image || 'https://via.placeholder.com/600x600';
+                                unique.push(fallback);
+                            }
+                            return unique.map((src, index) => `
+                                <div class="thumbnail ${index === 0 ? 'active' : ''}" onclick="changeMainImage('${src}', ${index})">
+                                    <img src="${src}" alt="${product.name}" onerror="this.src='https://via.placeholder.com/100x100'">
                                 </div>
-                            `).join('') :
-                            `<div class="thumbnail active" onclick="changeMainImage('${product.primary_image || 'https://via.placeholder.com/600x600'}', 0)">
-                                <img src="${product.primary_image || 'https://via.placeholder.com/600x600'}" alt="${product.name}">
-                            </div>`
-                        }
+                            `).join('');
+                        })()}
                     </div>
                 </div>
             </div>
@@ -100,12 +110,13 @@
                 <div class="product-info">
                     <h1 class="product-title">${product.name}</h1>
                     
+                    <!--
                     <div class="product-rating mb-3">
                         <div class="stars">${generateStars(product.average_rating || 0)}</div>
                         <span class="rating-text">(${product.total_reviews || 0} reviews)</span>
                         <a href="#reviews" class="ms-2 text-decoration-none">Write a review</a>
                     </div>
-                    
+                -->
                     <div class="product-price mb-4">
                         <span class="current-price">$${product.price}</span>
                         ${product.original_price && product.original_price > product.price ? 
@@ -137,8 +148,9 @@
                                 </select>
                             </div>
                         </div>
-                        
-                        <div class="row mb-3">
+                    
+
+                           <div class="row mb-3">
                             <div class="col-md-6">
                                 <label class="form-label">Quantity</label>
                                 <div class="quantity-controls">
@@ -151,7 +163,10 @@
                                     </button>
                                 </div>
                             </div>
-                            
+
+
+
+
                             <div class="col-md-6">
                                 <div class="stock-info">
                                     <span id="stock-info" class="text-muted">Please select size and color</span>
@@ -159,36 +174,71 @@
                             </div>
                         </div>
                         
-                        <!-- Pincode Delivery Check -->
-                        <div class="mb-3">
-                            <label class="form-label">Check Delivery</label>
-                            <div class="input-group">
-                                <input type="text" class="form-control" id="pincode-input" placeholder="Enter pincode" maxlength="6">
-                                <button class="btn btn-outline-primary" type="button" onclick="checkDelivery()">
-                                    <i class="fas fa-truck"></i> Check
-                                </button>
+                        <!-- Global Discount Coupon Section 
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <div class="discount-coupon-section">
+                                    <label class="form-label">
+                                        <i class="fas fa-tag me-1"></i>Have a discount code?
+                                    </label>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" id="discount-code" placeholder="Enter coupon code (e.g., DISCOUNT10)">
+                                        <button class="btn btn-outline-success" type="button" onclick="validateDiscountCode()">
+                                            <i class="fas fa-check"></i> Apply
+                                        </button>
+                                    </div>
+                                    <div id="discount-status" class="mt-2"></div>
+                                    <div id="available-coupons" class="mt-2">
+                                        <small class="text-muted">Available codes: 
+                                            <span class="badge bg-success me-1" onclick="applyCouponCode('DISCOUNT10')">DISCOUNT10</span>
+                                            <span class="badge bg-success me-1" onclick="applyCouponCode('DISCOUNT20')">DISCOUNT20</span>
+                                            <span class="badge bg-success me-1" onclick="applyCouponCode('SAVE50')">SAVE50</span>
+                                            <span class="badge bg-success me-1" onclick="applyCouponCode('WELCOME')">WELCOME</span>
+                                        </small>
+                                    </div>
+                                </div>
                             </div>
-                            <div id="delivery-info" class="mt-2"></div>
                         </div>
                         
-                        <!-- Product Discount Code -->
-                        <div class="mb-3">
-                            <label class="form-label">Discount Code</label>
-                            <div class="input-group">
-                                <input type="text" class="form-control" id="product-discount-code" placeholder="Enter discount code">
-                                <button class="btn btn-outline-success" type="button" onclick="applyProductDiscount()">
-                                    <i class="fas fa-tag"></i> Apply
-                                </button>
+                         <div class="row mb-3">
+                            <div class="col-12">
+                                <div class="price-summary">
+                                    <div class="d-flex justify-content-between">
+                                        <span>Original Price:</span>
+                                        <span id="original-price-display">$${product.price}</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between" id="discount-row" style="display: none;">
+                                        <span>Discount:</span>
+                                        <span id="discount-amount" class="text-success">-$0.00</span>
+                                    </div>
+                                    <hr>
+                                    <div class="d-flex justify-content-between">
+                                        <strong>Total Price:</strong>
+                                        <strong id="total-price-display">$${product.price}</strong>
+                                    </div>
+                                </div>
                             </div>
-                            <div id="discount-info" class="mt-2"></div>
                         </div>
+                        -->
+
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <div class="price-summary">
+        
+            
+                                    <div class="d-flex justify-content-between">
+                                        <strong>Total Price:</strong>
+                                        <strong id="total-price-display">$${product.price}</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Delivery pincode and product-level discount removed per requirements -->
                         
                         <div class="product-actions mb-4">
-                            <button type="submit" class="btn btn-primary btn-lg flex-fill me-2">
+                            <button type="submit" class="btn btn-primary btn-lg flex-fill">
                                 <i class="fas fa-cart-plus me-2"></i>Add to Cart
-                            </button>
-                            <button type="button" class="btn btn-outline-primary btn-lg" onclick="addToWishlist(${product.id})">
-                                <i class="fas fa-heart"></i>
                             </button>
                         </div>
                     </form>
@@ -233,11 +283,13 @@
                                 Specifications
                             </button>
                         </li>
+                        <!--
                         <li class="nav-item" role="presentation">
                             <button class="nav-link" data-bs-toggle="tab" data-bs-target="#reviews" type="button">
                                 Reviews (${product.total_reviews || 0})
                             </button>
                         </li>
+                        -->
                     </ul>
                     <div class="tab-content">
                         <div class="tab-pane fade show active" id="description">
@@ -276,6 +328,7 @@
                                 </table>
                             </div>
                         </div>
+                        <!--
                         <div class="tab-pane fade" id="reviews">
                             <div class="p-4">
                                 <h5>Customer Reviews</h5>
@@ -323,6 +376,7 @@
                                                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                                                         <button type="submit" class="btn btn-primary">Submit Review</button>
                                                     </div>
+                                                    -->
                                                 </form>
                                             </div>
                                         </div>
@@ -337,6 +391,12 @@
         
         // Set up interactions
         setupProductInteractions(product);
+        // Bind review form and load reviews so new submissions appear immediately
+        const reviewForm = document.getElementById('review-form');
+        if (reviewForm) {
+            reviewForm.addEventListener('submit', submitReview);
+        }
+        loadReviews();
     }
 
     function setupProductInteractions(product) {
@@ -496,108 +556,8 @@
         });
     }
 
-    function addToWishlist(productId) {
-        if (!authToken) {
-            showAlert('Please login to add items to wishlist', 'warning');
-            return;
-        }
-        showAlert('Added to wishlist!', 'success');
-    }
 
-    function checkDelivery() {
-        const pincode = document.getElementById('pincode-input').value.trim();
-        const deliveryInfo = document.getElementById('delivery-info');
-        
-        if (!pincode) {
-            deliveryInfo.innerHTML = '<small class="text-muted">Please enter a pincode</small>';
-            return;
-        }
-        
-        if (pincode.length !== 6 || !/^\d{6}$/.test(pincode)) {
-            deliveryInfo.innerHTML = '<small class="text-danger">Please enter a valid 6-digit pincode</small>';
-            return;
-        }
-        
-        deliveryInfo.innerHTML = '<small class="text-info"><i class="fas fa-spinner fa-spin"></i> Checking delivery...</small>';
-        
-        fetch(`/api/delivery/check/${pincode}/`)
-            .then(response => response.json())
-            .then(data => {
-                if (data.is_deliverable) {
-                    deliveryInfo.innerHTML = `
-                        <small class="text-success">
-                            <i class="fas fa-check-circle"></i> 
-                            Delivery available to ${data.location}
-                            ${data.delivery_charge > 0 ? ` - ₹${data.delivery_charge} delivery charge` : ' - FREE delivery'}
-                            (${data.estimated_days} days)
-                        </small>
-                    `;
-                } else {
-                    deliveryInfo.innerHTML = `
-                        <small class="text-danger">
-                            <i class="fas fa-times-circle"></i> 
-                            Delivery not available to ${data.location}
-                        </small>
-                    `;
-                }
-            })
-            .catch(error => {
-                console.error('Error checking delivery:', error);
-                deliveryInfo.innerHTML = '<small class="text-danger">Error checking delivery. Please try again.</small>';
-            });
-    }
-
-    function applyProductDiscount() {
-        const code = document.getElementById('product-discount-code').value.trim();
-        const discountInfo = document.getElementById('discount-info');
-        const quantity = parseInt(document.getElementById('quantity').value) || 1;
-        
-        if (!code) {
-            discountInfo.innerHTML = '<small class="text-muted">Please enter a discount code</small>';
-            return;
-        }
-        
-        if (!authToken) {
-            showAlert('Please login to apply discount codes', 'warning');
-            return;
-        }
-        
-        discountInfo.innerHTML = '<small class="text-info"><i class="fas fa-spinner fa-spin"></i> Applying discount...</small>';
-        
-        fetch(`/api/products/${productId}/apply-discount/`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${authToken}`
-            },
-            body: JSON.stringify({
-                code: code,
-                quantity: quantity
-            })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.message) {
-                discountInfo.innerHTML = `
-                    <small class="text-success">
-                        <i class="fas fa-check-circle"></i> 
-                        ${data.message}
-                        <br>You save: ₹${data.savings}
-                        <br>Discounted price: ₹${data.discounted_price}
-                    </small>
-                `;
-                showAlert(data.message, 'success');
-            } else {
-                discountInfo.innerHTML = `<small class="text-danger"><i class="fas fa-times-circle"></i> ${data.error}</small>`;
-                showAlert(data.error, 'danger');
-            }
-        })
-        .catch(error => {
-            console.error('Error applying discount:', error);
-            discountInfo.innerHTML = '<small class="text-danger">Error applying discount. Please try again.</small>';
-            showAlert('Error applying discount', 'danger');
-        });
-    }
+    // Delivery/pincode and product-discount logic removed
 
     function generateStars(rating) {
         const fullStars = Math.floor(rating);
@@ -644,13 +604,23 @@
         };
         
         const productId = window.location.pathname.split('/')[2];
-        const authToken = localStorage.getItem('authToken');
+        const token = localStorage.getItem('authToken');
         
-        apiRequest(`/api/products/${productId}/reviews/`, {
+        if (!token) {
+            showAlert('Please login to submit a review', 'warning');
+            window.location.href = '/login/';
+            return;
+        }
+
+        fetch(`/api/products/${productId}/reviews/`, {
             method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
             body: JSON.stringify(reviewData)
         })
-        .then(response => {
+        .then(async response => {
             if (response.ok) {
                 showAlert('Review submitted successfully!', 'success');
                 const modal = bootstrap.Modal.getInstance(document.getElementById('reviewModal'));
@@ -658,7 +628,8 @@
                 event.target.reset();
                 loadReviews();
             } else {
-                showAlert('Failed to submit review', 'danger');
+                const err = await response.json().catch(() => ({}));
+                showAlert(err.detail || 'Failed to submit review', 'danger');
             }
         })
         .catch(error => {
@@ -666,6 +637,9 @@
             showAlert('Error submitting review', 'danger');
         });
     }
+
+  
+
 
     function loadReviews() {
         const productId = window.location.pathname.split('/')[2];
@@ -713,11 +687,77 @@
     // Load product details on page load
     document.addEventListener('DOMContentLoaded', function() {
         loadProductDetails();
-        loadReviews();
         
         // Set up review form submission
         document.getElementById('review-form').addEventListener('submit', submitReview);
     });
+
+    // Global discount coupon functionality
+    let currentDiscount = null;
+    let originalPrice = 0;
+
+    function validateDiscountCode() {
+        const code = document.getElementById('discount-code').value.trim().toUpperCase();
+        const status = document.getElementById('discount-status');
+        
+        if (!code) {
+            status.innerHTML = '<small class="text-warning">Please enter a coupon code</small>';
+            return;
+        }
+        
+        status.innerHTML = '<small class="text-info">Validating...</small>';
+        
+        // Get current product price
+        const product = window.__currentProduct || {};
+        const price = parseFloat(product.price) || 0;
+        
+        fetch(`/api/products/validate-global-discount/?code=${code}&order_amount=${price}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.valid) {
+                    currentDiscount = data;
+                    originalPrice = price;
+                    updatePriceDisplay();
+                    status.innerHTML = `<small class="text-success">✓ ${data.description} - You save $${data.savings.toFixed(2)}!</small>`;
+                } else {
+                    status.innerHTML = `<small class="text-danger">✗ ${data.error}</small>`;
+                }
+            })
+            .catch(error => {
+                console.error('Error validating discount:', error);
+                status.innerHTML = '<small class="text-danger">Error validating coupon code</small>';
+            });
+    }
+
+    function applyCouponCode(code) {
+        document.getElementById('discount-code').value = code;
+        validateDiscountCode();
+    }
+
+    function updatePriceDisplay() {
+        const originalPriceDisplay = document.getElementById('original-price-display');
+        const discountRow = document.getElementById('discount-row');
+        const discountAmount = document.getElementById('discount-amount');
+        const totalPriceDisplay = document.getElementById('total-price-display');
+        
+        if (currentDiscount) {
+            originalPriceDisplay.textContent = `$${originalPrice.toFixed(2)}`;
+            discountRow.style.display = 'flex';
+            discountAmount.textContent = `-$${currentDiscount.savings.toFixed(2)}`;
+            totalPriceDisplay.textContent = `$${currentDiscount.discounted_total.toFixed(2)}`;
+        } else {
+            originalPriceDisplay.textContent = `$${originalPrice.toFixed(2)}`;
+            discountRow.style.display = 'none';
+            totalPriceDisplay.textContent = `$${originalPrice.toFixed(2)}`;
+        }
+    }
+
+    function clearDiscount() {
+        currentDiscount = null;
+        document.getElementById('discount-code').value = '';
+        document.getElementById('discount-status').innerHTML = '';
+        updatePriceDisplay();
+    }
 </script>
 
 <style>
@@ -961,28 +1001,33 @@
     margin-bottom: 1rem;
 }
 
-@media (max-width: 768px) {
-    .product-info {
-        padding-left: 0;
-        margin-top: 2rem;
-    }
-    
-    .product-title {
-        font-size: 2rem;
-    }
-    
-    .current-price {
-        font-size: 1.5rem;
-    }
-    
-    .product-actions {
-        flex-direction: column;
-    }
-    
-    .feature-item {
-        flex-direction: column;
-        text-align: center;
-    }
+/* Discount Coupon Styles */
+.discount-coupon-section {
+    background: #f8f9fa;
+    padding: 1rem;
+    border-radius: 10px;
+    border: 1px solid #e9ecef;
+}
+
+.price-summary {
+    background: #f8f9fa;
+    padding: 1rem;
+    border-radius: 10px;
+    border: 1px solid #e9ecef;
+}
+
+.price-summary hr {
+    margin: 0.5rem 0;
+}
+
+#available-coupons .badge {
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+#available-coupons .badge:hover {
+    transform: scale(1.05);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
 }
 </style>
 {% endblock %}

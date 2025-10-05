@@ -1,3 +1,4 @@
+
 from rest_framework import generics, status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
@@ -214,3 +215,4 @@ def remove_discount(request):
         return Response({'message': 'Discount removed'}, status=status.HTTP_200_OK)
     except Cart.DoesNotExist:
         return Response({'message': 'Cart not found'}, status=status.HTTP_404_NOT_FOUND)
+

@@ -14,4 +14,7 @@ urlpatterns = [
     path('<int:product_id>/apply-discount/', views.apply_product_discount, name='apply-product-discount'),
     path('wishlist/', views.WishlistListView.as_view(), name='wishlist-list'),
     path('<int:product_id>/wishlist/', views.toggle_wishlist, name='toggle-wishlist'),
+    path('global-coupons/', views.global_discount_coupons, name='global-discount-coupons'),
+    path('apply-global-discount/', views.apply_global_discount, name='apply-global-discount'),
+    path('validate-global-discount/', views.validate_global_discount, name='validate-global-discount'),
 ]

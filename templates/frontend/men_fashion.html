@@ -178,9 +178,6 @@
                         <button class="btn btn-primary btn-sm" onclick="quickView(${product.id})">
                             <i class="fas fa-eye"></i>
                         </button>
-                        <button class="btn btn-outline-primary btn-sm" onclick="addToWishlist(${product.id})">
-                            <i class="fas fa-heart"></i>
-                        </button>
                     </div>
                 </div>
                 <div class="card-body">
@@ -238,13 +235,6 @@
         window.location.href = `/products/${productId}/`;
     }
 
-    function addToWishlist(productId) {
-        if (!authToken) {
-            showAlert('Please login to add items to wishlist', 'warning');
-            return;
-        }
-        showAlert('Added to wishlist!', 'success');
-    }
 
     function addToCart(productId) {
         if (!authToken) {

@@ -208,6 +208,27 @@
                 </div>
             </div>
             
+            <!-- Global Coupon Code 
+            <div class="card mb-3">
+                <div class="card-body">
+                    <div class="row g-2 align-items-center">
+                        <div class="col-md-6">
+                            <label class="form-label mb-1"><i class="fas fa-tag me-1"></i>Have a coupon? Enter it here</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="global-coupon-code" placeholder="e.g. WELCOME">
+                                <button class="btn btn-outline-primary" type="button" onclick="applyGlobalCoupon()">Apply</button>
+                            </div>
+                            <small id="global-coupon-status" class="text-muted"></small>
+                        </div>
+                        <div class="col-md-6">
+                            <div id="coupon-list" class="small text-muted">
+                                Tip: Try <span class="badge bg-success">WELCOME</span> for 10% off
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+           -->
             <!-- Products Grid -->
             <div class="row" id="products-grid">
                 <!-- Products will be loaded here -->
@@ -314,30 +335,31 @@
         if (product.is_featured) {
             badges.push(`<span class="product-badge featured-badge">Featured</span>`);
         }
-        
+        /*
+        // Ensure we always show a single reliable image
+        const imageSrc = product.primary_image || '/media/products/default.jpg';
         col.innerHTML = `
             <div class="card product-card h-100 fade-in">
                 ${badges.join('')}
                 <div class="position-relative">
-                    <img src="${product.primary_image || '/media/products/default.jpg'}" 
+                    <img src="${imageSrc}" loading="lazy"
                          class="card-img-top" alt="${product.name}"
                          onerror="this.src='https://via.placeholder.com/300x300'">
                     <div class="product-overlay">
                         <button class="btn btn-primary btn-sm" onclick="quickView(${product.id})">
                             <i class="fas fa-eye"></i>
                         </button>
-                        <button class="btn btn-outline-primary btn-sm" onclick="addToWishlist(${product.id})">
-                            <i class="fas fa-heart"></i>
-                        </button>
                     </div>
                 </div>
                 <div class="card-body">
                     <h6 class="product-title">${product.name}</h6>
                     <p class="product-category">${product.category_name || 'Fashion'}</p>
+                    
                     <div class="product-rating">
                         <div class="stars">${generateStars(product.average_rating || 0)}</div>
                         <span class="rating-count">(${product.total_reviews || 0})</span>
                     </div>
+                    
                     <div class="product-price">
                         <span class="current-price">$${product.price}</span>
                         ${product.original_price && product.original_price > product.price ? 
@@ -346,9 +368,9 @@
                             `<span class="discount-percentage">-${product.discount_percentage}%</span>` : ''}
                     </div>
                     <div class="product-actions">
-                        <button class="btn btn-outline-primary btn-sm flex-fill" onclick="viewProduct(${product.id})">
+                     <button class="btn btn-outline-primary btn-sm flex-fill" onclick="viewProduct(${product.id})">
                             <i class="fas fa-eye me-1"></i>View
-                        </button>
+                        </button> 
                         <button class="btn btn-primary btn-sm" onclick="showVariantModal(${product.id})">
                             <i class="fas fa-cart-plus"></i>
                         </button>
@@ -359,7 +381,47 @@
         
         return col;
     }
+*/
 
+     // Ensure we always show a single reliable image
+        const imageSrc = product.primary_image || '/media/products/default.jpg';
+        col.innerHTML = `
+            <div class="card product-card h-100 fade-in">
+                ${badges.join('')}
+                <div class="position-relative">
+                    <img src="${imageSrc}" loading="lazy"
+                         class="card-img-top" alt="${product.name}"
+                         onerror="this.src='https://via.placeholder.com/300x300'">
+                    <div class="product-overlay">
+                        <button class="btn btn-primary btn-sm" onclick="quickView(${product.id})">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <h6 class="product-title">${product.name}</h6>
+                    <p class="product-category">${product.category_name || 'Fashion'}</p>
+                    <div class="product-price">
+                        <span class="current-price">$${product.price}</span>
+                        ${product.original_price && product.original_price > product.price ? 
+                            `<span class="original-price">$${product.original_price}</span>` : ''}
+                        ${product.discount_percentage > 0 ? 
+                            `<span class="discount-percentage">-${product.discount_percentage}%</span>` : ''}
+                    </div>
+                    <div class="product-actions">
+                          <button class="btn btn-outline-primary btn-sm flex-fill" onclick="viewProduct(${product.id})">
+                            <i class="fas fa-eye me-1"></i>View
+                        </button> 
+                    
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        return col;
+    }
+
+    
     function generateStars(rating) {
         const fullStars = Math.floor(rating);
         const hasHalfStar = rating % 1 !== 0;
@@ -402,28 +464,6 @@
         window.location.href = `/products/${productId}/`;
     }
 
-    function addToWishlist(productId) {
-        if (!authToken) {
-            showAlert('Please login to add items to wishlist', 'warning');
-            window.location.href = '/login/';
-            return;
-        }
-        
-        apiRequest(`/api/products/${productId}/wishlist/`, {
-            method: 'POST'
-        })
-        .then(response => {
-            if (response.ok) {
-                showAlert('Added to wishlist!', 'success');
-            } else {
-                showAlert('Failed to add to wishlist', 'danger');
-            }
-        })
-        .catch(error => {
-            console.error('Error adding to wishlist:', error);
-            showAlert('Error adding to wishlist', 'danger');
-        });
-    }
 
     function updatePagination(data) {
         const pagination = document.getElementById('pagination');
@@ -568,6 +608,41 @@
         
         loadProducts();
     });
+
+    async function applyGlobalCoupon() {
+        const input = document.getElementById('global-coupon-code');
+        const status = document.getElementById('global-coupon-status');
+        const code = (input.value || '').trim();
+        if (!authToken) {
+            showAlert('Please login to apply coupon', 'warning');
+            window.location.href = '/login/';
+            return;
+        }
+        if (!code) {
+            status.textContent = 'Enter a coupon code';
+            return;
+        }
+        status.textContent = 'Applying...';
+        try {
+            const resp = await apiRequest('/api/cart/apply-discount/', {
+                method: 'POST',
+                body: JSON.stringify({ code })
+            });
+            if (resp.ok) {
+                const data = await resp.json();
+                status.textContent = `Applied! You saved $${(data.discount_amount || 0).toFixed ? (data.discount_amount).toFixed(2) : data.discount_amount}`;
+                status.className = 'text-success';
+                updateCartBadge();
+            } else {
+                const err = await resp.json();
+                status.textContent = err.error || 'Invalid or expired code';
+                status.className = 'text-danger';
+            }
+        } catch (e) {
+            status.textContent = 'Error applying coupon';
+            status.className = 'text-danger';
+        }
+    }
 </script>
 
 <style>
@@ -628,5 +703,35 @@
     color: var(--white);
     border-color: var(--primary-color);
 }
+
+/* Make the filters sidebar scrollable */
+.filter-sidebar {
+    max-height: 85vh; /* Adjust height as needed */
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-right: 8px; /* space for scrollbar */
+    scrollbar-width: thin; /* Firefox */
+    scrollbar-color: #ccc #f8f9fa;
+}
+
+/* For WebKit browsers (Chrome, Edge, Safari) */
+.filter-sidebar::-webkit-scrollbar {
+    width: 8px;
+}
+
+.filter-sidebar::-webkit-scrollbar-track {
+    background: #f8f9fa;
+    border-radius: 10px;
+}
+
+.filter-sidebar::-webkit-scrollbar-thumb {
+    background-color: #ccc;
+    border-radius: 10px;
+}
+
+.filter-sidebar::-webkit-scrollbar-thumb:hover {
+    background-color: #999;
+}
+
 </style>
 {% endblock %}

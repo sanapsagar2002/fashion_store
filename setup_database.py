@@ -17,6 +17,12 @@ from products.models import Category, Product, ProductImage, ProductVariant
 from orders.models import DiscountCode
 from datetime import datetime, timedelta
 
+
+#new
+# In Django shell (python manage.py shell)
+
+#new
+
 User = get_user_model()
 
 def create_superuser():
@@ -225,3 +231,5 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+

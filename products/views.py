@@ -4,14 +4,15 @@ from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from django.db.models import Q
-from .models import Category, Product, ProductReview, ProductDiscount, Wishlist
+from .models import Category, Product, ProductReview, ProductDiscount, Wishlist, GlobalDiscountCoupon
 from .serializers import (
     CategorySerializer, 
     ProductSerializer, 
     ProductListSerializer,
     ProductCreateUpdateSerializer,
     ProductReviewSerializer,
-    WishlistSerializer
+    WishlistSerializer,
+    GlobalDiscountCouponSerializer
 )
 
 
@@ -59,21 +60,29 @@ class ProductListCreateView(generics.ListCreateAPIView):
         queryset = super().get_queryset()
         params = self.request.query_params
 
-        # Map filters
-        gender = params.get('gender')
-        category_name = params.get('category_name') or params.get('category')
-        min_price = params.get('min_price')
-        max_price = params.get('max_price')
+        # Accept frontend-friendly keys
+        gender_or_category = params.get('gender') or params.get('category')
+        accessory_type = params.get('accessory_type')
+        brand = params.get('brand')
+        min_price = params.get('min_price') or params.get('price__gte')
+        max_price = params.get('max_price') or params.get('price__lte')
         size = params.get('size')
         color = params.get('color')
         q = params.get('q')
 
-        if gender:
-            queryset = queryset.filter(gender=gender)
+        if gender_or_category:
+            gender_map = {
+                'Men': 'M', 'Women': 'W', 'Kids': 'K', 'Unisex': 'U',
+                'M': 'M', 'W': 'W', 'K': 'K', 'U': 'U'
+            }
+            code = gender_map.get(gender_or_category, gender_or_category)
+            queryset = queryset.filter(gender=code)
 
-        if category_name:
-            # Support filtering by category display name
-            queryset = queryset.filter(category__name__icontains=category_name)
+        if accessory_type:
+            queryset = queryset.filter(is_accessory=True, accessory_type=accessory_type)
+
+        if brand:
+            queryset = queryset.filter(brand__iexact=brand)
 
         if min_price:
             queryset = queryset.filter(price__gte=min_price)
@@ -300,3 +309,101 @@ def toggle_wishlist(request, product_id):
                 
     except Product.DoesNotExist:
         return Response({'error': 'Product not found'}, status=status.HTTP_404_NOT_FOUND)
+
+
+@api_view(['GET'])
+def global_discount_coupons(request):
+    """Get all available global discount coupons"""
+    coupons = GlobalDiscountCoupon.objects.filter(is_active=True).order_by('-created_at')
+    
+    # Filter valid coupons
+    valid_coupons = [c for c in coupons if c.is_valid()]
+    
+    coupon_data = []
+    for coupon in valid_coupons:
+        coupon_data.append({
+            'id': coupon.id,
+            'code': coupon.code,
+            'description': coupon.description,
+            'discount_type': coupon.discount_type,
+            'discount_value': float(coupon.discount_value),
+            'minimum_order_amount': float(coupon.minimum_order_amount),
+            'maximum_discount_amount': float(coupon.maximum_discount_amount) if coupon.maximum_discount_amount else None,
+            'valid_until': coupon.valid_until.isoformat(),
+        })
+    
+    return Response(coupon_data)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def apply_global_discount(request):
+    """Apply a global discount coupon"""
+    code = request.data.get('code', '').strip().upper()
+    order_amount = float(request.data.get('order_amount', 0))
+    
+    if not code:
+        return Response({'error': 'Discount code is required'}, status=status.HTTP_400_BAD_REQUEST)
+    
+    try:
+        coupon = GlobalDiscountCoupon.objects.get(
+            code=code,
+            is_active=True
+        )
+    except GlobalDiscountCoupon.DoesNotExist:
+        return Response({'error': 'Invalid discount code'}, status=status.HTTP_400_BAD_REQUEST)
+    
+    if not coupon.is_valid():
+        return Response({'error': 'Discount code is expired or no longer valid'}, status=status.HTTP_400_BAD_REQUEST)
+    
+    discount_amount = coupon.calculate_discount(order_amount)
+    
+    if discount_amount == 0:
+        return Response({'error': f'Minimum order amount of ${coupon.minimum_order_amount} required'}, status=status.HTTP_400_BAD_REQUEST)
+    
+    # Update usage count
+    coupon.used_count += 1
+    coupon.save()
+    
+    return Response({
+        'message': f'Discount code "{code}" applied successfully!',
+        'discount_amount': float(discount_amount),
+        'discounted_total': float(order_amount - discount_amount),
+        'savings': float(discount_amount),
+        'coupon_code': code
+    }, status=status.HTTP_200_OK)
+
+
+@api_view(['GET'])
+def validate_global_discount(request):
+    """Validate a global discount coupon without applying it"""
+    code = request.GET.get('code', '').strip().upper()
+    order_amount = float(request.GET.get('order_amount', 0))
+    
+    if not code:
+        return Response({'error': 'Discount code is required'}, status=status.HTTP_400_BAD_REQUEST)
+    
+    try:
+        coupon = GlobalDiscountCoupon.objects.get(
+            code=code,
+            is_active=True
+        )
+    except GlobalDiscountCoupon.DoesNotExist:
+        return Response({'error': 'Invalid discount code'}, status=status.HTTP_400_BAD_REQUEST)
+    
+    if not coupon.is_valid():
+        return Response({'error': 'Discount code is expired or no longer valid'}, status=status.HTTP_400_BAD_REQUEST)
+    
+    discount_amount = coupon.calculate_discount(order_amount)
+    
+    if discount_amount == 0:
+        return Response({'error': f'Minimum order amount of ${coupon.minimum_order_amount} required'}, status=status.HTTP_400_BAD_REQUEST)
+    
+    return Response({
+        'valid': True,
+        'discount_amount': float(discount_amount),
+        'discounted_total': float(order_amount - discount_amount),
+        'savings': float(discount_amount),
+        'coupon_code': code,
+        'description': coupon.description
+    }, status=status.HTTP_200_OK)
