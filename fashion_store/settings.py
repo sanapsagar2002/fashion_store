@@ -18,7 +18,7 @@ SECRET_KEY = 'django-insecure-your-secret-key-here-change-in-production'
 #DEBUG = True
 DEBUG = False
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'fashion_store.onrender.com']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'fashion-store.onrender.com']
 #ALLOWED_HOSTS = ['*']
 
 
