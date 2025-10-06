@@ -5,6 +5,7 @@ Django settings for fashion_store project.
 from pathlib import Path
 import os
 import dj_database_url
+import django_heroku
 from datetime import timedelta
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -14,10 +15,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-your-secret-key-here-change-in-production'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+#DEBUG = True
+DEBUG = False
 
-#ALLOWED_HOSTS = ['localhost', '127.0.0.1']
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'fashion_store.onrender.com']
+#ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -71,14 +73,19 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'fashion_store.wsgi.application'
 
-# Database
+# Database configuration
+
 if os.environ.get('DATABASE_URL'):
-    # Use Heroku PostgreSQL
+    # Render or any production DB (MySQL on Render)
     DATABASES = {
-        'default': dj_database_url.config(conn_max_age=600, ssl_require=True)
+        'default': dj_database_url.config(
+            default=os.environ.get('DATABASE_URL'),
+            conn_max_age=600,
+            ssl_require=False  # MySQL on Render may not require SSL
+        )
     }
 else:
-    # Use local MySQL
+    # Local MySQL configuration
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.mysql',
@@ -90,17 +97,6 @@ else:
         }
     }
 
-# Database
-#DATABASES = {
- #   'default': {
-  #      'ENGINE': 'django.db.backends.mysql',
-   #     'NAME': 'fashion_store_db',
-    #    'USER': 'root', 
-      #  'PASSWORD': "",  
-     #   'HOST':'localhost',
-      #  'PORT': '3306',
-  #  }
-#}
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
@@ -215,7 +211,8 @@ LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
 
 
-import django_heroku
+
 django_heroku.settings(locals())
+
 
 

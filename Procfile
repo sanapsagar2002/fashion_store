@@ -1,2 +1,2 @@
-web: gunicorn fashion_store.wsgi --log-file -
+web: gunicorn fashion_store.wsgi
 
