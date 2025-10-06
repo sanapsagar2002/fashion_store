@@ -4,6 +4,7 @@ Django settings for fashion_store project.
 
 from pathlib import Path
 import os
+import dj_database_url
 from datetime import timedelta
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -15,7 +16,9 @@ SECRET_KEY = 'django-insecure-your-secret-key-here-change-in-production'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+#ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['*']
+
 
 # Application definition
 INSTALLED_APPS = [
@@ -69,16 +72,35 @@ TEMPLATES = [
 WSGI_APPLICATION = 'fashion_store.wsgi.application'
 
 # Database
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'fashion_store_db',
-        'USER': 'root', 
-        'PASSWORD': "",  
-        'HOST':'localhost',
-        'PORT': '3306',
+if os.environ.get('DATABASE_URL'):
+    # Use Heroku PostgreSQL
+    DATABASES = {
+        'default': dj_database_url.config(conn_max_age=600, ssl_require=True)
     }
-}
+else:
+    # Use local MySQL
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.mysql',
+            'NAME': 'fashion_store_db',
+            'USER': 'root',
+            'PASSWORD': '',
+            'HOST': 'localhost',
+            'PORT': '3306',
+        }
+    }
+
+# Database
+#DATABASES = {
+ #   'default': {
+  #      'ENGINE': 'django.db.backends.mysql',
+   #     'NAME': 'fashion_store_db',
+    #    'USER': 'root', 
+      #  'PASSWORD': "",  
+     #   'HOST':'localhost',
+      #  'PORT': '3306',
+  #  }
+#}
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
@@ -103,11 +125,21 @@ USE_I18N = True
 USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
+#STATIC_URL = '/static/'
+#STATIC_ROOT = BASE_DIR / 'staticfiles'
+#STATICFILES_DIRS = [
+ #   BASE_DIR / 'static',
+#]
+
+
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
-STATICFILES_DIRS = [
-    BASE_DIR / 'static',
-]
+STATICFILES_DIRS = [BASE_DIR / 'static']
+
+# Whitenoise settings
+MIDDLEWARE.insert(1, "whitenoise.middleware.WhiteNoiseMiddleware")
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+
 
 # Media files
 MEDIA_URL = '/media/'
@@ -181,3 +213,9 @@ AUTH_USER_MODEL = 'authentication.User'
 LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
+
+
+import django_heroku
+django_heroku.settings(locals())
+
+
