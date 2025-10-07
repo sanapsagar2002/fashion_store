@@ -10,29 +10,31 @@
             <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="0" class="active"></button>
             <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="1"></button>
             <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="2"></button>
+            <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="3"></button>
         </div>
+
+        <!-- ✅ Only one carousel-inner wrapper -->
         <div class="carousel-inner">
+
+            <!-- Slide 1: New Collection -->
             <div class="carousel-item active">
                 <div class="hero-slide">
                     <div class="hero-image-frame">
-                        <img src="/media/products/clock.jpg" alt="New Collection" class="hero-image" height="3">
+                        <img src="/media/products/clock.jpg" alt="New Collection" class="hero-image">
                     </div>
                     <div class="container">
                         <div class="row align-items-center min-vh-100">
                             <div class="col-lg-6">
                                 <h1 class="display-3 fw-bold text-white mb-4">New Collection</h1>
                                 <p class="lead text-white mb-4">Discover the latest trends in fashion. From casual wear to formal attire, express your unique style.</p>
-                              <!--
-                                <a href="{% url 'new_collection' %}" class="btn btn-primary btn-lg me-3">New Collection</a>
-                              -->
-                            
-                        
                                 <a href="{% url 'products' %}" class="btn btn-primary btn-lg me-3">Shop All</a>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
+
+            <!-- Slide 2: Men's Fashion -->
             <div class="carousel-item">
                 <div class="hero-slide">
                     <div class="hero-image-frame">
@@ -50,17 +52,37 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Slide 3: Women's Fashion -->
             <div class="carousel-item">
                 <div class="hero-slide">
                     <div class="hero-image-frame">
-                    <img src="/media/products/sneaker_kids_1.jpg" alt="Kids Collection" class="hero-image">
-               
+                        <img src="/media/products/elegant_black_dress_1.jpg" alt="Women's Fashion" class="hero-image">
+                    </div>
+                    <div class="container">
+                        <div class="row align-items-center min-vh-100">
+                            <div class="col-lg-6">
+                                <h1 class="display-3 fw-bold text-white mb-4">Women's Fashion</h1>
+                                <p class="lead text-white mb-4">Elegant, stylish, and comfortable clothing for the modern woman.</p>
+                                <a href="{% url 'women_fashion' %}" class="btn btn-primary btn-lg me-3">Shop Women</a>
+                                <a href="{% url 'products' %}?category=Women&accessory=dress" class="btn btn-outline-light btn-lg">Dresses</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 4: Kids Collection -->
+            <div class="carousel-item">
+                <div class="hero-slide">
+                    <div class="hero-image-frame">
+                        <img src="/media/products/sneaker_kids_1.jpg" alt="Kids Collection" class="hero-image">
                     </div>
                     <div class="container">
                         <div class="row align-items-center min-vh-100">
                             <div class="col-lg-6">
                                 <h1 class="display-3 fw-bold text-white mb-4">Kids Collection</h1>
-                                <p class="lead text-white mb-4">Fun, comfortable, and stylish clothing for your little ones. Quality that lasts.</p>
+                                <p class="lead text-white mb-4">Fun, comfortable, and stylish clothing for your little ones.</p>
                                 <a href="{% url 'kids_collection' %}" class="btn btn-primary btn-lg me-3">Shop Kids</a>
                                 <a href="{% url 'products' %}?accessory=sneaker" class="btn btn-outline-light btn-lg">Sneakers</a>
                             </div>
@@ -68,7 +90,10 @@
                     </div>
                 </div>
             </div>
-        </div>
+
+        </div> <!-- ✅ end of single carousel-inner -->
+
+        <!-- Controls -->
         <button class="carousel-control-prev" type="button" data-bs-target="#heroCarousel" data-bs-slide="prev">
             <span class="carousel-control-prev-icon"></span>
         </button>
@@ -77,6 +102,7 @@
         </button>
     </div>
 </section>
+
 
 <!-- Quick Categories Section -->
 <section class="py-5 bg-light">

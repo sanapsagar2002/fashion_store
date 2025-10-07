@@ -53,6 +53,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+
 ROOT_URLCONF = 'fashion_store.urls'
 
 TEMPLATES = [
@@ -65,27 +66,32 @@ TEMPLATES = [
                 'django.template.context_processors.debug',
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
+                'django.template.context_processors.static',
                 'django.contrib.messages.context_processors.messages',
             ],
         },
     },
 ]
 
+
 WSGI_APPLICATION = 'fashion_store.wsgi.application'
 
 # Database configuration
 
-if os.environ.get('DATABASE_URL'):
-    # Render or any production DB (MySQL on Render)
+    # Detect if running on Render
+RENDER = os.environ.get('RENDER', None)
+
+if RENDER:
+    # Use Render PostgreSQL database
     DATABASES = {
         'default': dj_database_url.config(
             default=os.environ.get('DATABASE_URL'),
             conn_max_age=600,
-            ssl_require=False  # MySQL on Render may not require SSL
+            ssl_require=True
         )
     }
 else:
-    # Local MySQL configuration
+    # Use local MySQL database
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.mysql',

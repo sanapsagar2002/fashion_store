@@ -4,13 +4,16 @@
 
 {% block content %}
 <!-- Hero Carousel Section -->
+ 
 <section class="hero-carousel">
     <div id="heroCarousel" class="carousel slide" data-bs-ride="carousel">
-        <div class="carousel-indicators">
+       <!--<div class="carousel-indicators">
             <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="0" class="active"></button>
             <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="1"></button>
             <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="2"></button>
         </div>
+    -->
+    
         <div class="carousel-inner">
             <div class="carousel-item active">
                 <div class="hero-slide">
@@ -23,12 +26,13 @@
                                 <h1 class="display-3 fw-bold text-white mb-4">Kids Collection</h1>
                                 <p class="lead text-white mb-4">Fun, comfortable, and stylish clothing for your little ones. Quality that lasts through all their adventures.</p>
                                 <a href="{% url 'products' %}?category=Kids" class="btn btn-primary btn-lg me-3">Shop Kids</a>
-                                <a href="{% url 'products' %}?category=Kids&accessory=sneaker" class="btn btn-outline-light btn-lg">Kids Shoes</a>
+                                <!--<a href="{% url 'products' %}?category=Kids&accessory=sneaker" class="btn btn-outline-light btn-lg">Kids Shoes</a>-->
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
+            <!--
             <div class="carousel-item">
                 <div class="hero-slide">
                     <div class="hero-image-frame">
@@ -71,6 +75,7 @@
             <span class="carousel-control-next-icon"></span>
         </button>
     </div>
+-->
 </section>
 
 <!-- Kids Collection Products -->
@@ -78,7 +83,7 @@
     <div class="container">
         <div class="d-flex justify-content-between align-items-center mb-5">
             <h2 class="mb-0">Kids Collection</h2>
-            <a href="{% url 'products' %}?category=Kids" class="btn btn-outline-primary">View All Kids Items</a>
+          <!--<a href="{% url 'products' %}?category=Kids" class="btn btn-outline-primary">View All Kids Items</a>-->
         </div>
         <div class="row g-4" id="kids-products">
             <!-- Products will be loaded here -->
@@ -182,10 +187,12 @@
                 </div>
                 <div class="card-body">
                     <h6 class="product-title">${product.name}</h6>
+                    <!--
                     <div class="product-rating">
                         <div class="stars">${generateStars(product.average_rating || 0)}</div>
                         <span class="rating-count">(${product.total_reviews || 0})</span>
                     </div>
+                    -->
                     <div class="product-price">
                         <span class="current-price">$${product.price}</span>
                         ${product.original_price && product.original_price > product.price ? 
@@ -195,9 +202,11 @@
                         <button class="btn btn-outline-primary btn-sm flex-fill" onclick="viewProduct(${product.id})">
                             <i class="fas fa-eye me-1"></i>View
                         </button>
+                        <!--
                         <button class="btn btn-primary btn-sm" onclick="addToCart(${product.id})">
                             <i class="fas fa-cart-plus"></i>
                         </button>
+                        -->
                     </div>
                 </div>
             </div>
